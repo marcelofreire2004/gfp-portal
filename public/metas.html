@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-layout.css">
+    <style>
+        .content { max-width: 900px; margin: 0 auto; }
+
+        .btn-novo {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 12px; margin-bottom: 20px;
+            background: #4f46e5; color: #fff; border: none; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-novo:hover { background: #4338ca; }
+
+        /* Filtros de status */
+        .filtros { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filtro-btn {
+            padding: 6px 16px; border-radius: 99px; border: 1px solid #d1d5db;
+            background: #fff; font-size: 0.8rem; cursor: pointer; font-weight: 500; color: #6b7280;
+        }
+        .filtro-btn.ativo { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+
+        /* Resumo */
+        .resumo-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 10px; margin-bottom: 20px;
+        }
+        @media (max-width: 600px) { .resumo-grid { grid-template-columns: repeat(2, 1fr); } }
+        .resumo-card {
+            background: #fff; border-radius: 10px; padding: 14px 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center;
+        }
+        .resumo-card .label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
+        .resumo-card .valor { font-size: 1rem; font-weight: 700; color: #1e1b4b; }
+
+        /* Grid de metas */
+        .metas-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        /* Card de meta */
+        .meta-card {
+            background: #fff; border-radius: 14px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+            padding: 20px 18px 16px; position: relative;
+            border-top: 4px solid #4f46e5;
+        }
+        .meta-card.concluida { border-top-color: #16a34a; }
+        .meta-card.cancelada { border-top-color: #9ca3af; opacity: 0.7; }
+
+        .meta-status-badge {
+            position: absolute; top: 14px; right: 14px;
+            font-size: 0.68rem; padding: 2px 8px; border-radius: 99px;
+            font-weight: 700; text-transform: uppercase;
+        }
+        .badge-em_andamento { background: #ede9fe; color: #5b21b6; }
+        .badge-concluida    { background: #dcfce7; color: #065f46; }
+        .badge-cancelada    { background: #f3f4f6; color: #6b7280; }
+
+        .meta-categoria {
+            font-size: 0.72rem; color: #9ca3af; text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .meta-desc {
+            font-size: 0.95rem; font-weight: 700; color: #1e1b4b;
+            padding-right: 70px; margin-bottom: 16px;
+        }
+
+        /* Progresso circular SVG */
+        .progress-circle-wrap {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 14px;
+        }
+        .circle-svg { width: 72px; height: 72px; flex-shrink: 0; }
+        .circle-bg   { fill: none; stroke: #f3f4f6; stroke-width: 8; }
+        .circle-fill { fill: none; stroke-width: 8; stroke-linecap: round;
+            transform: rotate(-90deg); transform-origin: 36px 36px;
+            transition: stroke-dashoffset 0.5s ease; }
+        .circle-fill.em_andamento { stroke: #4f46e5; }
+        .circle-fill.concluida    { stroke: #16a34a; }
+        .circle-fill.cancelada    { stroke: #9ca3af; }
+
+        .circle-text {
+            font-size: 0.9rem; font-weight: 800; fill: #1e1b4b; dominant-baseline: middle;
+            text-anchor: middle;
+        }
+
+        .meta-valores { flex: 1; }
+        .meta-valor-label { font-size: 0.7rem; color: #9ca3af; text-transform: uppercase; }
+        .meta-valor-atual { font-size: 1.1rem; font-weight: 800; color: #1e1b4b; }
+        .meta-valor-obj   { font-size: 0.8rem; color: #9ca3af; margin-bottom: 8px; }
+        .meta-data-alvo   { font-size: 0.72rem; color: #9ca3af; }
+        .meta-data-alvo.urgente { color: #f59e0b; }
+
+        .meta-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .meta-btn {
+            flex: 1; padding: 8px; border-radius: 8px; border: none; cursor: pointer;
+            font-size: 0.8rem; font-weight: 600;
+        }
+        .meta-btn-aporte { background: #ede9fe; color: #5b21b6; }
+        .meta-btn-hist   { background: #f0fdf4; color: #065f46; }
+        .meta-btn-edit   { background: #f3f4f6; color: #374151; }
+
+        /* Aportes histórico */
+        .aportes-panel { display: none; margin-top: 12px; border-top: 1px solid #f3f4f6; padding-top: 12px; }
+        .aportes-panel.open { display: block; }
+        .aporte-title { font-size: 0.72rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; }
+        .aporte-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f9f9f9; }
+        .aporte-item:last-child { border-bottom: none; }
+        .aporte-data { font-size: 0.75rem; color: #9ca3af; min-width: 80px; }
+        .aporte-desc { flex: 1; font-size: 0.8rem; color: #6b7280; }
+        .aporte-valor { font-size: 0.85rem; font-weight: 700; color: #16a34a; }
+
+        .empty-state { text-align: center; padding: 48px 16px; color: #9ca3af; font-size: 0.9rem; }
+        .loading { text-align: center; color: #9ca3af; padding: 32px; }
+
+        /* Modais */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); justify-content: center;
+            align-items: flex-end; z-index: 100;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #fff; border-radius: 16px 16px 0 0; padding: 28px 24px;
+            width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+        }
+        .modal-drag { width: 40px; height: 4px; background: #e5e7eb; border-radius: 99px; margin: 0 auto 20px; }
+        .modal h2 { font-size: 1.1rem; color: #1e1b4b; font-weight: 700; margin-bottom: 20px; }
+
+        .field-group { position: relative; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+        .field-label { position: absolute; top: -9px; left: 12px; background: #fff; padding: 0 4px; font-size: 0.75rem; color: #6b7280; }
+        .field-group input, .field-group select, .field-group textarea {
+            width: 100%; border: none; outline: none; font-size: 0.95rem;
+            color: #1e1b4b; background: transparent; padding: 4px 0;
+        }
+        .field-group select { cursor: pointer; }
+        .field-group textarea { resize: vertical; min-height: 60px; }
+
+        .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f3f4f6; }
+        .btn { padding: 10px 20px; border: none; border-radius: 99px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .btn-primary   { background: #4f46e5; color: #fff; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-secondary { background: none; color: #4f46e5; border: 1px solid #4f46e5; }
+        .btn-danger    { background: #fee2e2; color: #ef4444; }
+        .msg { font-size: 0.8rem; color: #ef4444; text-align: center; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<script src="/shared-layout.js"></script>
+
+<div class="content">
+    <!-- TABS -->
+    <div style="display:flex;background:var(--surface,#fff);border-radius:12px;padding:4px;gap:4px;border:1px solid #e2e8f0;margin-bottom:20px">
+        <button class="filtro-btn ativo" onclick="switchMetaTab('metas',this)" style="flex:1;text-align:center;border-radius:8px;padding:10px">Metas</button>
+        <button class="filtro-btn" onclick="switchMetaTab('visao',this)" style="flex:1;text-align:center;border-radius:8px;padding:10px">Visão Geral</button>
+        <button class="filtro-btn" onclick="switchMetaTab('objetivos',this)" style="flex:1;text-align:center;border-radius:8px;padding:10px">Objetivos</button>
+    </div>
+
+    <!-- TAB: METAS -->
+    <div id="tab-metas">
+    <div class="resumo-grid" id="resumo-grid"></div>
+    <button class="btn-novo" onclick="abrirModalNovo()">+ Nova Meta</button>
+    <div class="filtros">
+        <button class="filtro-btn ativo" onclick="filtrar('todos', this)">Todas</button>
+        <button class="filtro-btn" onclick="filtrar('em_andamento', this)">Em Andamento</button>
+        <button class="filtro-btn" onclick="filtrar('concluida', this)">Concluídas</button>
+        <button class="filtro-btn" onclick="filtrar('cancelada', this)">Canceladas</button>
+    </div>
+    <div class="metas-grid" id="lista-metas"><div class="loading">Carregando...</div></div>
+    </div>
+
+    <!-- TAB: VISÃO GERAL -->
+    <div id="tab-visao" style="display:none">
+        <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:16px;border-left:4px solid #4F46E5">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#6366F1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff">🧠</div>
+                <div><div style="font-size:.88rem;font-weight:800;color:#1e1b4b">Conselheiro de Objetivos</div><div style="font-size:.72rem;color:#9ca3af">Análise personalizada das suas metas</div></div>
+            </div>
+            <div id="visao-conselheiro"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 6px rgba(0,0,0,.08)">
+                <div style="font-size:.75rem;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:12px">📊 Distribuição dos Objetivos</div>
+                <div id="visao-distribuicao"></div>
+            </div>
+            <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 6px rgba(0,0,0,.08)">
+                <div style="font-size:.75rem;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:12px">💡 Insights</div>
+                <div id="visao-insights"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: OBJETIVOS -->
+    <div id="tab-objetivos" style="display:none">
+        <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <div style="font-size:.75rem;font-weight:700;color:#9ca3af;text-transform:uppercase">🎯 Quanto preciso reservar por mês?</div>
+            </div>
+            <div id="obj-reserva-mensal"></div>
+        </div>
+        <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:16px">
+            <div style="font-size:.75rem;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:12px">✅ Meu plano é viável?</div>
+            <div id="obj-viabilidade"></div>
+        </div>
+        <div style="background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 6px rgba(0,0,0,.08)">
+            <div style="font-size:.75rem;font-weight:700;color:#9ca3af;text-transform:uppercase;margin-bottom:12px">📋 Orientação do Mentor</div>
+            <div id="obj-orientacao"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Meta -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <div class="modal-drag"></div>
+        <h2 id="modal-titulo">Nova Meta</h2>
+        <form id="form-meta">
+            <input type="hidden" id="meta-id">
+            <div class="field-group">
+                <span class="field-label">Descrição</span>
+                <input type="text" id="meta-descricao" required placeholder="Ex: Reserva de emergência">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Categoria</span>
+                <input type="text" id="meta-categoria" placeholder="Ex: Emergência, Viagem, Aposentadoria">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Valor Objetivo (R$)</span>
+                <input type="number" id="meta-valor-obj" required step="0.01" min="0" placeholder="0,00">
+            </div>
+            <div class="field-group" id="campo-valor-atual">
+                <span class="field-label">Valor Atual (R$)</span>
+                <input type="number" id="meta-valor-atual" step="0.01" min="0" placeholder="0,00" value="0">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Data de Início</span>
+                <input type="date" id="meta-data-inicio">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Data Alvo</span>
+                <input type="date" id="meta-data-alvo">
+            </div>
+            <div class="field-group" id="campo-status-meta" style="display:none">
+                <span class="field-label">Status</span>
+                <select id="meta-status">
+                    <option value="em_andamento">Em Andamento</option>
+                    <option value="concluida">Concluída</option>
+                    <option value="cancelada">Cancelada</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <span class="field-label">Observação</span>
+                <textarea id="meta-observacao" placeholder="Opcional..."></textarea>
+            </div>
+            <p class="msg" id="modal-msg"></p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-excluir" onclick="excluirMeta()" style="display:none">Excluir</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Aporte -->
+<div class="modal-overlay" id="modal-aporte-overlay">
+    <div class="modal">
+        <div class="modal-drag"></div>
+        <h2 id="modal-aporte-titulo">Registrar Aporte</h2>
+        <form id="form-aporte">
+            <input type="hidden" id="aporte-meta-id">
+            <div class="field-group">
+                <span class="field-label">Valor (R$)</span>
+                <input type="number" id="aporte-valor" required step="0.01" min="0.01" placeholder="0,00">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Data</span>
+                <input type="date" id="aporte-data">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Observação</span>
+                <input type="text" id="aporte-obs" placeholder="Opcional...">
+            </div>
+            <p class="msg" id="modal-aporte-msg"></p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="fecharModalAporte()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Confirmar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function moeda(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) }
+function fmtData(d) { if (!d) return null; return new Date(d).toLocaleDateString('pt-BR') }
+function hoje() { return new Date().toISOString().split('T')[0] }
+
+let metas = []
+let filtroAtual = 'todos'
+const aportesCarregados = {}
+
+async function carregar() {
+    const res = await fetch('/metas')
+    metas = await res.json()
+    renderResumo()
+    renderMetas()
+}
+
+function filtrar(status, btn) {
+    filtroAtual = status
+    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('ativo'))
+    btn.classList.add('ativo')
+    renderMetas()
+}
+
+function renderResumo() {
+    const total = metas.length
+    const andamento = metas.filter(m => m.status === 'em_andamento').length
+    const concluidas = metas.filter(m => m.status === 'concluida').length
+    const totalObj = metas.filter(m => m.status !== 'cancelada').reduce((s,m) => s + Number(m.valor_objetivo||0), 0)
+
+    document.getElementById('resumo-grid').innerHTML = `
+        <div class="resumo-card"><div class="label">Total</div><div class="valor">${total}</div></div>
+        <div class="resumo-card"><div class="label">Em Andamento</div><div class="valor" style="color:#4f46e5">${andamento}</div></div>
+        <div class="resumo-card"><div class="label">Concluídas</div><div class="valor" style="color:#16a34a">${concluidas}</div></div>
+        <div class="resumo-card"><div class="label">Valor Total</div><div class="valor">${moeda(totalObj)}</div></div>
+    `
+}
+
+function buildCircle(pct, status) {
+    const r = 28, cx = 36, cy = 36
+    const circ = 2 * Math.PI * r
+    const offset = circ - (pct / 100) * circ
+    const cls = status === 'concluida' ? 'concluida' : status === 'cancelada' ? 'cancelada' : 'em_andamento'
+    return `
+        <svg class="circle-svg" viewBox="0 0 72 72">
+            <circle class="circle-bg" cx="${cx}" cy="${cy}" r="${r}"/>
+            <circle class="circle-fill ${cls}" cx="${cx}" cy="${cy}" r="${r}"
+                stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
+            <text class="circle-text" x="${cx}" y="${cy}">${Math.round(pct)}%</text>
+        </svg>`
+}
+
+function renderMetas() {
+    const el = document.getElementById('lista-metas')
+    const lista = filtroAtual === 'todos' ? metas : metas.filter(m => m.status === filtroAtual)
+
+    if (!lista.length) {
+        el.innerHTML = '<div class="empty-state">Nenhuma meta encontrada.</div>'
+        return
+    }
+
+    el.innerHTML = lista.map(m => {
+        const pct = Number(m.percentual || 0)
+        const hoje = new Date()
+        const alvo = m.data_alvo ? new Date(m.data_alvo) : null
+        const urgente = alvo && (alvo - hoje) < 30 * 24 * 60 * 60 * 1000 && m.status === 'em_andamento'
+
+        const statusLabel = { em_andamento:'Em Andamento', concluida:'Concluída', cancelada:'Cancelada' }[m.status] || m.status
+
+        return `
+        <div class="meta-card ${m.status}" id="card-meta-${m.id_meta}">
+            <span class="meta-status-badge badge-${m.status}">${statusLabel}</span>
+            ${m.categoria ? `<div class="meta-categoria">${m.categoria}</div>` : ''}
+            <div class="meta-desc">${m.descricao}</div>
+
+            <div class="progress-circle-wrap">
+                ${buildCircle(pct, m.status)}
+                <div class="meta-valores">
+                    <div class="meta-valor-label">Acumulado</div>
+                    <div class="meta-valor-atual">${moeda(m.valor_atual)}</div>
+                    <div class="meta-valor-obj">de ${moeda(m.valor_objetivo)}</div>
+                    ${alvo ? `<div class="meta-data-alvo ${urgente ? 'urgente' : ''}">🗓 ${fmtData(m.data_alvo)}${urgente ? ' ⚠️' : ''}</div>` : ''}
+                </div>
+            </div>
+
+            <div class="meta-actions">
+                ${m.status === 'em_andamento' ? `<button class="meta-btn meta-btn-aporte" onclick="abrirModalAporte(${m.id_meta}, '${m.descricao.replace(/'/g,"\\'")}')">💰 Aportar</button>` : ''}
+                <button class="meta-btn meta-btn-hist" onclick="toggleAportes(${m.id_meta})">📋 Aportes</button>
+                <button class="meta-btn meta-btn-edit" onclick="abrirModalEditar(${JSON.stringify(m).replace(/"/g,'&quot;')})">✏️</button>
+            </div>
+
+            <div class="aportes-panel" id="aportes-${m.id_meta}">
+                <div class="aporte-title">Carregando...</div>
+            </div>
+        </div>`
+    }).join('')
+}
+
+async function toggleAportes(id) {
+    const el = document.getElementById(`aportes-${id}`)
+    const aberto = el.classList.contains('open')
+    el.classList.toggle('open', !aberto)
+
+    if (!aberto && !aportesCarregados[id]) {
+        aportesCarregados[id] = true
+        const res = await fetch(`/metas/${id}/aportes`)
+        const aportes = await res.json()
+        renderAportes(id, aportes)
+    }
+}
+
+function renderAportes(id, aportes) {
+    const el = document.getElementById(`aportes-${id}`)
+    if (!aportes.length) {
+        el.innerHTML = '<div class="aporte-title">Nenhum aporte registrado.</div>'
+        return
+    }
+    el.innerHTML = `
+        <div class="aporte-title">Aportes (${aportes.length})</div>
+        ${aportes.map(a => `
+        <div class="aporte-item">
+            <div class="aporte-data">${fmtData(a.data_aporte)}</div>
+            <div class="aporte-desc">${a.observacao || '—'}</div>
+            <div class="aporte-valor">${moeda(a.valor)}</div>
+        </div>`).join('')}`
+}
+
+// Modal Meta
+function abrirModalNovo() {
+    document.getElementById('modal-titulo').textContent = 'Nova Meta'
+    document.getElementById('meta-id').value = ''
+    document.getElementById('form-meta').reset()
+    document.getElementById('meta-data-inicio').value = hoje()
+    document.getElementById('meta-valor-atual').value = 0
+    document.getElementById('btn-excluir').style.display = 'none'
+    document.getElementById('modal-msg').textContent = ''
+    document.getElementById('campo-valor-atual').style.display = ''
+    document.getElementById('campo-status-meta').style.display = 'none'
+    document.getElementById('modal-overlay').classList.add('open')
+}
+
+function abrirModalEditar(m) {
+    document.getElementById('modal-titulo').textContent = 'Editar Meta'
+    document.getElementById('meta-id').value = m.id_meta
+    document.getElementById('meta-descricao').value = m.descricao || ''
+    document.getElementById('meta-categoria').value = m.categoria || ''
+    document.getElementById('meta-valor-obj').value = m.valor_objetivo || ''
+    document.getElementById('meta-data-inicio').value = m.data_inicio ? m.data_inicio.split('T')[0] : ''
+    document.getElementById('meta-data-alvo').value = m.data_alvo ? m.data_alvo.split('T')[0] : ''
+    document.getElementById('meta-status').value = m.status || 'em_andamento'
+    document.getElementById('meta-observacao').value = m.observacao || ''
+    document.getElementById('btn-excluir').style.display = 'inline-block'
+    document.getElementById('modal-msg').textContent = ''
+    document.getElementById('campo-valor-atual').style.display = 'none'
+    document.getElementById('campo-status-meta').style.display = ''
+    document.getElementById('modal-overlay').classList.add('open')
+}
+
+function fecharModal() { document.getElementById('modal-overlay').classList.remove('open') }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModal() })
+
+document.getElementById('form-meta').addEventListener('submit', async e => {
+    e.preventDefault()
+    const id = document.getElementById('meta-id').value
+    const body = {
+        descricao:      document.getElementById('meta-descricao').value,
+        categoria:      document.getElementById('meta-categoria').value || null,
+        valor_objetivo: Number(document.getElementById('meta-valor-obj').value),
+        data_inicio:    document.getElementById('meta-data-inicio').value,
+        data_alvo:      document.getElementById('meta-data-alvo').value || null,
+        observacao:     document.getElementById('meta-observacao').value || null,
+    }
+    if (!id) {
+        body.valor_atual = Number(document.getElementById('meta-valor-atual').value) || 0
+    } else {
+        body.status = document.getElementById('meta-status').value
+    }
+
+    let res
+    if (id) {
+        res = await fetch(`/metas/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    } else {
+        res = await fetch('/metas', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    }
+
+    if (res.ok) { fecharModal(); await carregar() }
+    else { document.getElementById('modal-msg').textContent = 'Erro ao salvar.' }
+})
+
+async function excluirMeta() {
+    const id = document.getElementById('meta-id').value
+    if (!id || !confirm('Excluir esta meta e todos os aportes?')) return
+    const res = await fetch(`/metas/${id}`, { method: 'DELETE' })
+    if (res.ok) { fecharModal(); await carregar() }
+}
+
+// Modal Aporte
+function abrirModalAporte(id, nome) {
+    document.getElementById('modal-aporte-titulo').textContent = `Aportar — ${nome}`
+    document.getElementById('aporte-meta-id').value = id
+    document.getElementById('form-aporte').reset()
+    document.getElementById('aporte-data').value = hoje()
+    document.getElementById('modal-aporte-msg').textContent = ''
+    document.getElementById('modal-aporte-overlay').classList.add('open')
+}
+
+function fecharModalAporte() { document.getElementById('modal-aporte-overlay').classList.remove('open') }
+document.getElementById('modal-aporte-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalAporte() })
+
+document.getElementById('form-aporte').addEventListener('submit', async e => {
+    e.preventDefault()
+    const id = document.getElementById('aporte-meta-id').value
+    const body = {
+        valor:       Number(document.getElementById('aporte-valor').value),
+        data_aporte: document.getElementById('aporte-data').value,
+        observacao:  document.getElementById('aporte-obs').value || null,
+    }
+
+    const res = await fetch(`/metas/${id}/aportes`, {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    })
+
+    if (res.ok) {
+        fecharModalAporte()
+        delete aportesCarregados[id]
+        await carregar()
+    } else {
+        document.getElementById('modal-aporte-msg').textContent = 'Erro ao registrar aporte.'
+    }
+})
+
+carregar()
+
+// ═══ TAB SWITCHING ═══
+function switchMetaTab(tab,btn){
+document.querySelectorAll('[id^="tab-"]').forEach(t=>{if(t.id.startsWith('tab-'))t.style.display='none'})
+document.getElementById('tab-'+tab).style.display=''
+// Highlight
+const parent=btn.parentElement
+parent.querySelectorAll('.filtro-btn').forEach(b=>b.classList.remove('ativo'))
+btn.classList.add('ativo')
+if(tab==='visao')renderVisaoGeral()
+if(tab==='objetivos')renderObjetivos()
+}
+
+// ═══ VISÃO GERAL ═══
+function renderVisaoGeral(){
+const ativas=metas.filter(m=>m.status==='em_andamento')
+const concluidas=metas.filter(m=>m.status==='concluida')
+const totalObj=ativas.reduce((s,m)=>s+Number(m.valor_objetivo||0),0)
+const totalAtual=ativas.reduce((s,m)=>s+Number(m.valor_atual||0),0)
+const progMedio=ativas.length?Math.round(ativas.reduce((s,m)=>s+Number(m.percentual||0),0)/ativas.length):0
+
+// Conselheiro
+const cards=[]
+if(!metas.length)cards.push({t:'info',txt:'Nenhuma meta cadastrada. Defina pelo menos um objetivo financeiro para começar.'})
+else{
+if(progMedio>=70)cards.push({t:'success',txt:`Progresso médio de <strong>${progMedio}%</strong>. Você está no caminho certo!`})
+else if(progMedio>=30)cards.push({t:'warning',txt:`Progresso médio de <strong>${progMedio}%</strong>. Aumente os aportes para atingir seus objetivos no prazo.`})
+else cards.push({t:'danger',txt:`Progresso médio de apenas <strong>${progMedio}%</strong>. Considere revisar prazos ou aumentar contribuições.`})
+if(concluidas.length)cards.push({t:'success',txt:`🏆 ${concluidas.length} meta(s) concluída(s). Parabéns!`})
+const atrasadas=ativas.filter(m=>m.data_alvo&&new Date(m.data_alvo)<new Date())
+if(atrasadas.length)cards.push({t:'danger',txt:`⏰ ${atrasadas.length} meta(s) com prazo vencido: ${atrasadas.map(m=>m.descricao).join(', ')}`})
+if(totalObj>0&&totalAtual<totalObj*0.3)cards.push({t:'warning',txt:`Você atingiu apenas ${Math.round(totalAtual/totalObj*100)}% do valor total planejado (${moeda(totalObj)}).`})
+}
+const icons={success:'✅',warning:'⚠',danger:'🔴',info:'💡'}
+document.getElementById('visao-conselheiro').innerHTML=cards.map(c=>`<div style="padding:8px 12px;background:#f8fafc;border-radius:8px;margin-bottom:6px;border-left:3px solid ${c.t==='success'?'#22C55E':c.t==='warning'?'#F59E0B':c.t==='danger'?'#EF4444':'#4F46E5'};font-size:.8rem;line-height:1.5">${icons[c.t]} ${c.txt}</div>`).join('')
+
+// Distribuição
+const porCat={};ativas.forEach(m=>{const cat=m.categoria||'Sem categoria';porCat[cat]=(porCat[cat]||0)+Number(m.valor_objetivo||0)})
+const catEntries=Object.entries(porCat).sort((a,b)=>b[1]-a[1])
+document.getElementById('visao-distribuicao').innerHTML=catEntries.length?catEntries.map(([cat,val])=>{const pct=totalObj>0?Math.round(val/totalObj*100):0;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px"><span style="font-weight:600">${cat}</span><span style="font-weight:700">${moeda(val)} (${pct}%)</span></div><div style="background:#f1f5f9;border-radius:99px;height:5px;overflow:hidden"><div style="height:100%;width:${pct}%;background:#4F46E5;border-radius:99px"></div></div></div>`}).join(''):'<div style="color:#9ca3af;font-size:.82rem">Sem dados</div>'
+
+// Insights
+const insights=[]
+if(ativas.length===0)insights.push('💡 Defina objetivos para acompanhar seu progresso.')
+if(ativas.length&&progMedio>=80)insights.push('✅ Metas quase completas — considere criar novos objetivos.')
+if(totalObj>0)insights.push(`📊 Total planejado: ${moeda(totalObj)} · Acumulado: ${moeda(totalAtual)}`)
+if(ativas.some(m=>!m.data_alvo))insights.push('⚠ Algumas metas não têm prazo definido.')
+document.getElementById('visao-insights').innerHTML=insights.map(i=>`<div style="padding:6px 0;font-size:.8rem;border-bottom:1px solid #f1f5f9">${i}</div>`).join('')
+}
+
+// ═══ OBJETIVOS ═══
+function renderObjetivos(){
+const ativas=metas.filter(m=>m.status==='em_andamento')
+
+// Quanto preciso reservar por mês
+if(!ativas.length){
+document.getElementById('obj-reserva-mensal').innerHTML='<div style="color:#9ca3af;font-size:.82rem">Adicione metas para calcular.</div>'
+document.getElementById('obj-viabilidade').innerHTML='<div style="color:#9ca3af;font-size:.82rem">Adicione metas para análise.</div>'
+document.getElementById('obj-orientacao').innerHTML='<div style="color:#9ca3af;font-size:.82rem">Defina pelo menos uma meta.</div>'
+return}
+
+let totalMensal=0
+const detalhe=ativas.map(m=>{
+const rest=Math.max(0,Number(m.valor_objetivo)-Number(m.valor_atual))
+const meses=m.data_alvo?Math.max(1,Math.ceil((new Date(m.data_alvo)-new Date())/(30*86400000))):12
+const mensal=rest/meses
+totalMensal+=mensal
+return{nome:m.descricao,mensal,rest,meses,pct:Number(m.percentual||0)}
+})
+
+document.getElementById('obj-reserva-mensal').innerHTML=`<div style="font-size:1.2rem;font-weight:900;color:#4F46E5;margin-bottom:12px">${moeda(totalMensal)}/mês</div>`+detalhe.map(d=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:.8rem"><span>${d.nome}</span><strong>${moeda(d.mensal)}/mês</strong></div>`).join('')
+
+// Viabilidade
+const viavel=totalMensal<5000 // placeholder simplificado
+document.getElementById('obj-viabilidade').innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:12px;background:${viavel?'#f0fdf4':'#fef2f2'};border-radius:10px;margin-bottom:10px"><span style="font-size:1.2rem">${viavel?'✅':'⚠'}</span><div><div style="font-size:.85rem;font-weight:700;color:${viavel?'#166534':'#991b1b'}">${viavel?'Plano viável':'Plano exige atenção'}</div><div style="font-size:.72rem;color:#6b7280">Necessário: ${moeda(totalMensal)}/mês para todas as metas</div></div></div>`
+
+// Orientação
+const orientacoes=[]
+if(detalhe.some(d=>d.pct<20))orientacoes.push('🎯 Metas com menos de 20% — priorize aportes regulares.')
+if(totalMensal>3000)orientacoes.push('💡 Considere estender prazos se o valor mensal for alto demais.')
+orientacoes.push('📋 Aportes frequentes e pequenos são mais efetivos que grandes aportes esporádicos.')
+if(ativas.some(m=>!m.data_alvo))orientacoes.push('⏰ Defina prazos para todas as metas — isso aumenta o comprometimento.')
+document.getElementById('obj-orientacao').innerHTML=orientacoes.map(o=>`<div style="padding:8px 12px;background:#f8fafc;border-radius:8px;margin-bottom:6px;font-size:.8rem;border-left:3px solid #4F46E5">${o}</div>`).join('')
+}
+</script>
+</body>
+</html>

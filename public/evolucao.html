@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentor Financeiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared-layout.css">
+<style>
+
+.hero{background:var(--primary-gradient);color:#fff;padding:28px 32px;border-radius:0 0 var(--radius-xl) var(--radius-xl);box-shadow:0 8px 32px rgba(79,70,229,.3);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:400px;height:400px;background:radial-gradient(circle,rgba(255,255,255,.08) 0%,transparent 70%)}
+.hero-top{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;margin-bottom:16px}
+.hero-title{font-size:.82rem;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.5px}
+.hero-nav{display:flex;gap:8px}
+.hero-nav a{color:rgba(255,255,255,.85);text-decoration:none;font-size:.78rem;font-weight:600;padding:7px 14px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,.2);transition:all .2s}
+.hero-nav a:hover{background:rgba(255,255,255,.15)}
+.hero-center{text-align:center;position:relative;z-index:1}
+.hero-icon{font-size:2.5rem;margin-bottom:8px}
+.hero-subtitle{font-size:1.2rem;font-weight:800;margin-bottom:4px}
+.hero-desc{font-size:.8rem;opacity:.75;max-width:500px;margin:0 auto}
+
+.main{max-width:900px;margin:0 auto;padding:0}
+@media(max-width:768px){.main{padding:0}}
+
+.panel{background:var(--surface);border-radius:var(--radius-lg);padding:22px;box-shadow:var(--shadow-xs);border:1px solid var(--border-light);margin-bottom:16px;transition:box-shadow .2s}
+.panel:hover{box-shadow:var(--shadow-sm)}
+.panel-title{font-size:.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* Cards de recomendação */
+.rec-card{display:flex;gap:12px;padding:14px 16px;background:var(--surface-hover);border-radius:var(--radius);margin-bottom:10px;border-left:4px solid var(--border);transition:all .2s}
+.rec-card:hover{background:var(--primary-light);border-left-color:var(--primary);transform:translateX(3px)}
+.rec-card.rc-success{border-left-color:var(--success)}
+.rec-card.rc-warning{border-left-color:var(--warning)}
+.rec-card.rc-danger{border-left-color:var(--danger)}
+.rec-card.rc-info{border-left-color:var(--info)}
+.rec-icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+.rec-content{flex:1}
+.rec-title{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.rec-text{font-size:.78rem;color:var(--text-secondary);line-height:1.5}
+
+/* Chat */
+.chat-area{max-height:400px;overflow-y:auto;margin-bottom:16px;padding:4px}
+.chat-area::-webkit-scrollbar{width:5px}.chat-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+.chat-msg{margin-bottom:12px;display:flex;gap:10px;align-items:flex-start}
+.chat-msg-user{justify-content:flex-end}
+.chat-msg-user .chat-bubble{background:var(--primary);color:#fff;border-radius:var(--radius) var(--radius) 4px var(--radius)}
+.chat-msg-ai .chat-bubble{background:var(--surface-hover);color:var(--text);border-radius:var(--radius) var(--radius) var(--radius) 4px;border:1px solid var(--border-light)}
+.chat-bubble{padding:14px 18px;max-width:85%;font-size:.82rem;line-height:1.6}
+.chat-bubble strong{font-weight:700}
+.chat-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.chat-avatar-ai{background:var(--primary-light);color:var(--primary)}
+.chat-avatar-user{background:var(--surface-hover)}
+.chat-input-row{display:flex;gap:8px}
+.chat-input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-size:.88rem;color:var(--text);background:var(--surface);outline:none;font-family:inherit;transition:border-color .2s}
+.chat-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.08)}
+.chat-btn{background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:14px 20px;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;font-family:inherit}
+.chat-btn:hover{background:var(--primary-dark)}
+
+/* Sugestões */
+.sug-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:600px){.sug-grid{grid-template-columns:1fr}}
+.sug-btn{background:var(--surface-hover);border:1.5px solid var(--border-light);border-radius:var(--radius-sm);padding:12px 14px;font-size:.78rem;font-weight:600;color:var(--text-secondary);cursor:pointer;text-align:left;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:8px}
+.sug-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);transform:translateY(-1px)}
+.sug-btn .sug-icon{font-size:1rem}
+
+/* Educação */
+.edu-card{background:var(--surface-hover);border-radius:var(--radius);padding:16px;margin-bottom:10px;cursor:pointer;transition:all .2s;border:1px solid var(--border-light)}
+.edu-card:hover{border-color:var(--primary);background:var(--primary-light);transform:translateY(-2px)}
+.edu-title{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.edu-desc{font-size:.75rem;color:var(--text-muted);line-height:1.4}
+.edu-body{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);font-size:.8rem;color:var(--text-secondary);line-height:1.6}
+.edu-card.open .edu-body{display:block}
+
+/* Impact table */
+.impact-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border-light);margin-top:10px}
+.impact-table td{padding:10px 14px;font-size:.8rem;border-top:1px solid var(--border-light)}
+.impact-table td:first-child{color:var(--text-secondary)}.impact-table td:last-child{font-weight:700;text-align:right}
+</style>
+</head>
+<body>
+
+<!-- Page header -->
+<div style="margin-bottom:24px">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+<div style="width:44px;height:44px;border-radius:50%;background:var(--primary-gradient);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0">🧠</div>
+<div>
+<h1 style="font-size:1.2rem;font-weight:800;color:var(--text);margin-bottom:2px">Seu Mentor Financeiro</h1>
+<p style="font-size:.82rem;color:var(--text-muted)">Recomendações personalizadas, correção de rota e respostas para suas dúvidas financeiras.</p>
+</div>
+</div>
+</div>
+
+<div class="main">
+
+<!-- Alertas e Correção de Rota -->
+<div class="panel">
+<div class="panel-title">🚨 Alertas & Correção de Rota</div>
+<div id="alertas"></div>
+</div>
+
+<!-- Missões do Mês -->
+<div class="panel">
+<div class="panel-title">🎯 Missões do Mês</div>
+<div id="missoes"></div>
+</div>
+
+<!-- Recomendações -->
+<div class="panel">
+<div class="panel-title">💡 Recomendações Personalizadas</div>
+<div id="recomendacoes"></div>
+</div>
+
+<!-- Perguntas e Respostas -->
+<div class="panel">
+<div class="panel-title">💬 Pergunte ao Mentor</div>
+<div class="chat-area" id="chat-area"></div>
+<div class="chat-input-row">
+<input type="text" class="chat-input" id="chat-input" placeholder="Ex: Posso comprar um carro? Estou gastando muito?" onkeydown="if(event.key==='Enter')enviar()">
+<button class="chat-btn" onclick="enviar()">Enviar</button>
+</div>
+<div style="margin-top:14px">
+<div style="font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">Perguntas frequentes</div>
+<div class="sug-grid">
+<button class="sug-btn" onclick="perguntar('Posso comprar um carro?')"><span class="sug-icon">🚗</span>Posso comprar um carro?</button>
+<button class="sug-btn" onclick="perguntar('Estou gastando muito?')"><span class="sug-icon">💸</span>Estou gastando muito?</button>
+<button class="sug-btn" onclick="perguntar('Como investir melhor?')"><span class="sug-icon">📈</span>Como investir melhor?</button>
+<button class="sug-btn" onclick="perguntar('Devo quitar minha dívida?')"><span class="sug-icon">💳</span>Devo quitar minha dívida?</button>
+<button class="sug-btn" onclick="perguntar('Quanto preciso para me aposentar?')"><span class="sug-icon">🏖️</span>Quanto preciso para aposentar?</button>
+<button class="sug-btn" onclick="perguntar('Como montar uma reserva de emergência?')"><span class="sug-icon">🛡️</span>Reserva de emergência</button>
+</div>
+</div>
+</div>
+
+<!-- Educação Financeira -->
+<div class="panel">
+<div class="panel-title">📚 Educação Financeira</div>
+<div id="educacao">
+<div class="edu-card" onclick="this.classList.toggle('open')"><div class="edu-title">📐 Regra 50/30/20<span style="margin-left:auto;font-size:.7rem;color:var(--text-muted)">▼</span></div><div class="edu-desc">Como distribuir sua renda de forma inteligente</div><div class="edu-body">Destine <strong>50%</strong> para necessidades (moradia, alimentação, transporte), <strong>30%</strong> para desejos (lazer, assinaturas) e <strong>20%</strong> para investimentos e objetivos. É o ponto de partida para qualquer planejamento financeiro sólido.</div></div>
+<div class="edu-card" onclick="this.classList.toggle('open')"><div class="edu-title">🛡️ Reserva de Emergência<span style="margin-left:auto;font-size:.7rem;color:var(--text-muted)">▼</span></div><div class="edu-desc">Quanto guardar e onde investir</div><div class="edu-body">Guarde de <strong>3 a 12 meses</strong> de despesas mensais. Para CLT, 6 meses é suficiente. Autônomos devem mirar 12 meses. Invista em aplicações com <strong>liquidez imediata</strong> (Tesouro Selic, CDB com liquidez diária). Nunca use para objetivos — é seu colchão de segurança.</div></div>
+<div class="edu-card" onclick="this.classList.toggle('open')"><div class="edu-title">📈 Juros Compostos<span style="margin-left:auto;font-size:.7rem;color:var(--text-muted)">▼</span></div><div class="edu-desc">O poder do tempo nos investimentos</div><div class="edu-body">R$ 500/mês investidos a 10% ao ano se tornam <strong>R$ 102 mil</strong> em 10 anos e <strong>R$ 380 mil</strong> em 20 anos. Quanto antes começar, maior o efeito bola de neve. O tempo é o ingrediente mais poderoso dos investimentos.</div></div>
+<div class="edu-card" onclick="this.classList.toggle('open')"><div class="edu-title">💳 Dívidas Boas vs Ruins<span style="margin-left:auto;font-size:.7rem;color:var(--text-muted)">▼</span></div><div class="edu-desc">Nem toda dívida é igual</div><div class="edu-body"><strong>Dívida boa:</strong> Financiamento imobiliário (patrimônio), educação (retorno futuro). <strong>Dívida ruim:</strong> Cartão de crédito rotativo (12% ao mês!), cheque especial, empréstimos para consumo. Priorize quitar as ruins — nenhum investimento supera esses juros.</div></div>
+<div class="edu-card" onclick="this.classList.toggle('open')"><div class="edu-title">🎯 FIRE - Independência Financeira<span style="margin-left:auto;font-size:.7rem;color:var(--text-muted)">▼</span></div><div class="edu-desc">Viver de renda passiva</div><div class="edu-body">Para se aposentar, acumule <strong>25x suas despesas anuais</strong> (regra dos 4%). Se gasta R$ 5.000/mês = R$ 60.000/ano → precisa de <strong>R$ 1.500.000</strong> investidos. Com R$ 2.000/mês a 10% a.a., leva aproximadamente 22 anos.</div></div>
+</div>
+</div>
+
+</div>
+
+<script src="/shared-layout.js"></script>
+<script>
+const moeda=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
+let dados=null,metas=[]
+
+async function carregar(){
+try{
+const ano=new Date().getFullYear(),mes=new Date().getMonth()+1
+const[r1,r2]=await Promise.all([fetch(`/dashboard?ano=${ano}&mes=${mes}`),fetch('/metas')])
+dados=await r1.json();metas=await r2.json()
+renderAlertas();renderMissoes();renderRecomendacoes()
+}catch(e){console.error(e)}
+}
+
+function getVal(arr,t,c){return Number((arr||[]).find(r=>r.tipo===t)?.[c]||0)}
+
+function renderAlertas(){
+const el=document.getElementById('alertas')
+const rec=getVal(dados.resumoMes,'receita','pago'),desp=getVal(dados.resumoMes,'despesa','pago')
+const recAnt=getVal(dados.mesAnterior,'receita','pago'),despAnt=getVal(dados.mesAnterior,'despesa','pago')
+const saldo=rec-desp,pend=Number(dados.pendentes?.qtd||0),div=Number(dados.dividasTotais?.total_restante||0)
+const items=[]
+if(saldo<0)items.push({t:'danger',i:'🚨',title:'Déficit no mês',text:`Suas despesas superaram a receita em ${moeda(Math.abs(saldo))}. Revise gastos urgentemente.`})
+if(despAnt>0&&desp>despAnt*1.2)items.push({t:'warning',i:'📊',title:'Despesas em alta',text:`Gastos subiram ${Math.round((desp-despAnt)/despAnt*100)}% vs mês anterior. Verifique o que mudou.`})
+if(recAnt>0&&rec<recAnt*0.8)items.push({t:'warning',i:'📉',title:'Queda na receita',text:`Receita caiu ${Math.round((recAnt-rec)/recAnt*100)}%. Avalie alternativas de renda.`})
+if(pend>3)items.push({t:'warning',i:'⏳',title:`${pend} pendências acumuladas`,text:'Regularize para evitar juros e multas.'})
+if(div>0)items.push({t:'danger',i:'💳',title:'Dívidas ativas',text:`Você tem ${moeda(div)} em dívidas. Priorize quitar — juros corroem patrimônio.`})
+const metasAtrasadas=metas.filter(m=>m.data_alvo&&new Date(m.data_alvo)<new Date()&&Number(m.percentual)<100)
+if(metasAtrasadas.length)items.push({t:'warning',i:'🎯',title:`${metasAtrasadas.length} meta(s) atrasada(s)`,text:`Revise prazos: ${metasAtrasadas.map(m=>m.descricao).join(', ')}`})
+if(!items.length)items.push({t:'success',i:'✅',title:'Tudo em ordem',text:'Nenhum alerta no momento. Continue monitorando semanalmente.'})
+el.innerHTML=items.map(x=>`<div class="rec-card rc-${x.t}"><span class="rec-icon">${x.i}</span><div class="rec-content"><div class="rec-title">${x.title}</div><div class="rec-text">${x.text}</div></div></div>`).join('')
+}
+
+function renderMissoes(){
+const el=document.getElementById('missoes')
+const rec=getVal(dados.resumoMes,'receita','pago'),desp=getVal(dados.resumoMes,'despesa','pago'),inv=getVal(dados.resumoMes,'investimento','pago')
+const pend=Number(dados.pendentes?.qtd||0),div=Number(dados.dividasTotais?.total_restante||0)
+const items=[]
+if(pend>0)items.push({i:'✅',title:'Pagar pendências',text:`${pend} lançamento(s) aguardando pagamento (${moeda(Number(dados.pendentes?.total||0))})`})
+if(rec>0&&inv<rec*0.2)items.push({i:'📈',title:'Aumentar investimentos',text:`Atual: ${Math.round(inv/rec*100)}% da renda. Meta: 20% (+${moeda(rec*0.2-inv)}/mês)`})
+if(div>0)items.push({i:'💳',title:'Reduzir dívidas',text:`Aporte extra na dívida mais cara. Economia com juros.`})
+const metasBaixas=metas.filter(m=>m.status==='em_andamento'&&Number(m.percentual)<30)
+if(metasBaixas.length)items.push({i:'🎯',title:'Aportar em metas',text:`${metasBaixas.length} objetivo(s) com menos de 30% de progresso.`})
+if(rec>0&&desp>rec*0.7)items.push({i:'✂️',title:'Revisar despesas',text:`Gastos consomem ${Math.round(desp/rec*100)}% da renda. Tente reduzir para 70%.`})
+if(!items.length)items.push({i:'🏆',title:'Missão cumprida!',text:'Todas as missões concluídas. Mantenha a disciplina.'})
+el.innerHTML=items.map(x=>`<div class="rec-card rc-info"><span class="rec-icon">${x.i}</span><div class="rec-content"><div class="rec-title">${x.title}</div><div class="rec-text">${x.text}</div></div></div>`).join('')
+}
+
+function renderRecomendacoes(){
+const el=document.getElementById('recomendacoes')
+const rec=getVal(dados.resumoMes,'receita','pago'),desp=getVal(dados.resumoMes,'despesa','pago'),inv=getVal(dados.resumoMes,'investimento','pago')
+const saldo=rec-desp-inv
+const items=[]
+if(saldo>rec*0.3&&rec>0)items.push({t:'success',i:'💰',title:'Sobra alta — invista!',text:`Você tem ${moeda(saldo)} sobrando (${Math.round(saldo/rec*100)}%). Destine para investimentos ou metas.`})
+if(rec>0&&inv>=rec*0.2)items.push({t:'success',i:'🏆',title:'Parabéns pelos investimentos!',text:`${Math.round(inv/rec*100)}% investido — acima da meta de 20%. Mantenha!`})
+if(rec>0&&inv<rec*0.1)items.push({t:'warning',i:'📈',title:'Comece a investir mais',text:`Apenas ${Math.round(inv/rec*100)}% investido. Comece com Tesouro Selic ou CDB.`})
+const topCats=dados.topCategorias||[]
+if(topCats.length&&rec>0){const top=topCats[0];const pct=Math.round(Number(top.total)/rec*100);if(pct>25)items.push({t:'info',i:'📊',title:`${top.categoria}: ${pct}% da renda`,text:'Essa é sua maior categoria. Avalie se há espaço para otimizar.'})}
+if(metas.length>0){const proxima=metas.sort((a,b)=>Number(b.percentual)-Number(a.percentual))[0];if(proxima&&Number(proxima.percentual)>=80)items.push({t:'success',i:'🎉',title:`Quase lá: ${proxima.descricao}`,text:`${proxima.percentual}% concluído! Faltam ${moeda(Number(proxima.valor_objetivo)-Number(proxima.valor_atual))}.`})}
+if(!items.length)items.push({t:'info',i:'💡',title:'Continue acompanhando',text:'Seu perfil financeiro está estável. Revisite mensalmente.'})
+el.innerHTML=items.map(x=>`<div class="rec-card rc-${x.t}"><span class="rec-icon">${x.i}</span><div class="rec-content"><div class="rec-title">${x.title}</div><div class="rec-text">${x.text}</div></div></div>`).join('')
+}
+
+// Chat do Mentor
+function perguntar(txt){document.getElementById('chat-input').value=txt;enviar()}
+function enviar(){
+const input=document.getElementById('chat-input'),msg=input.value.trim()
+if(!msg)return;input.value=''
+const chat=document.getElementById('chat-area')
+chat.innerHTML+=`<div class="chat-msg chat-msg-user"><div class="chat-bubble">${msg}</div><div class="chat-avatar chat-avatar-user">👤</div></div>`
+setTimeout(()=>{chat.innerHTML+=`<div class="chat-msg chat-msg-ai"><div class="chat-avatar chat-avatar-ai">🧠</div><div class="chat-bubble">${responder(msg)}</div></div>`;chat.scrollTop=chat.scrollHeight},300)
+chat.scrollTop=chat.scrollHeight
+}
+
+function responder(msg){
+const m=msg.toLowerCase()
+const rec=getVal(dados.resumoMes,'receita','pago'),desp=getVal(dados.resumoMes,'despesa','pago'),inv=getVal(dados.resumoMes,'investimento','pago')
+const saldo=rec-desp-inv,div=Number(dados.dividasTotais?.total_restante||0)
+const valMatch=m.match(/r\$\s?([\d.,]+)\s*(mil|k)?/i)||m.match(/([\d.,]+)\s*(mil|k)/i)
+let val=0;if(valMatch){val=parseFloat(valMatch[1].replace('.','').replace(',','.'));if(valMatch[2])val*=1000}
+
+if(m.includes('carro')||m.includes('comprar')){val=val||80000;const parc=(val*0.8)*0.015*Math.pow(1.015,48)/(Math.pow(1.015,48)-1);const ns=saldo-parc;return`<strong>🚗 Análise: Comprar por ${moeda(val)}</strong><br><br><table class="impact-table"><tr><td>Parcela estimada (48x)</td><td style="color:var(--danger)">${moeda(parc)}</td></tr><tr><td>Sua sobra atual</td><td>${moeda(saldo)}</td></tr><tr><td>Sobra após parcela</td><td style="color:${ns>=0?'var(--success)':'var(--danger)'}">${moeda(ns)}</td></tr><tr><td>Comprometimento</td><td>${rec>0?Math.round((desp+parc)/rec*100):0}%</td></tr></table><br>${ns>=0?'✅ <strong>Viável</strong>, mas reduz capacidade de investir.':'⚠️ <strong>Não recomendado</strong> agora. A parcela supera sua sobra.'}<br><br>💡 Alternativa: junte ${moeda(saldo*0.5)} por mês e em ${Math.ceil(val*0.4/(saldo*0.5))} meses terá 40% de entrada.`}
+
+if(m.includes('gastando muito')||m.includes('gastan')){const pct=rec>0?Math.round(desp/rec*100):0;return`<strong>💸 Análise dos seus gastos</strong><br><br>Você gasta <strong>${moeda(desp)}</strong> por mês (<strong>${pct}%</strong> da renda).<br><br>${pct>80?'🚨 <strong>Sim, está gastando demais!</strong> O ideal é manter até 70%. Revise as maiores categorias.':pct>70?'⚠️ Está no limite. Há pouca margem para imprevistos. Tente reduzir 10%.':'✅ Seus gastos estão dentro do saudável!'}<br><br>Top categorias:<br>${(dados.topCategorias||[]).slice(0,3).map(c=>`• ${c.categoria}: ${moeda(c.total)} (${rec>0?Math.round(Number(c.total)/rec*100):0}%)`).join('<br>')}`}
+
+if(m.includes('investir')){const pct=rec>0?Math.round(inv/rec*100):0;return`<strong>📈 Sobre investir</strong><br><br>Atualmente você investe <strong>${moeda(inv)}/mês</strong> (${pct}% da renda).<br><br>${pct>=20?'✅ Excelente! Está acima dos 20% recomendados.':'💡 O ideal é investir pelo menos 20% da renda.'}<br><br><strong>Sugestão por perfil:</strong><br>• Iniciante: Tesouro Selic + CDB 100% CDI<br>• Intermediário: Tesouro IPCA + FIIs<br>• Avançado: Ações + FIIs + Renda Fixa<br><br>Com ${moeda(saldo>0?saldo*0.5:0)}/mês extra investido, em 10 anos teria ~${moeda((inv+(saldo>0?saldo*0.5:0))*120)}.`}
+
+if(m.includes('dívida')||m.includes('divida')||m.includes('quitar')){return div>0?`<strong>💳 Suas dívidas: ${moeda(div)}</strong><br><br>🚨 <strong>Priorize quitar!</strong> Motivos:<br>• Juros de dívida geralmente superam rendimento de investimentos<br>• Cartão rotativo cobra até 400% a.a.<br>• Cada R$ 1.000 quitados podem economizar R$ 150+/mês em juros<br><br><strong>Estratégia:</strong><br>1. Liste todas as dívidas por taxa de juros<br>2. Pague o mínimo em todas<br>3. Jogue toda sobra na mais cara<br>4. Após quitar, direcione para a próxima`:`<strong>💳 Parabéns!</strong><br><br>✅ Você não tem dívidas ativas! Isso é excelente.<br>Mantenha o hábito de pagar à vista ou no cartão sem juros.`}
+
+if(m.includes('aposentar')||m.includes('independ')){const despAnual=desp*12;const meta25x=despAnual*25;const falta=meta25x-inv*120;return`<strong>🏖️ Independência Financeira</strong><br><br>Regra dos 4%: acumule <strong>25x suas despesas anuais</strong>.<br><br><table class="impact-table"><tr><td>Despesas anuais</td><td>${moeda(despAnual)}</td></tr><tr><td>Patrimônio necessário</td><td style="color:var(--primary)"><strong>${moeda(meta25x)}</strong></td></tr><tr><td>Investindo ${moeda(inv)}/mês</td><td>~${Math.ceil(meta25x/(inv*12||1))} anos</td></tr></table><br>💡 Quanto mais cedo começar e mais investir, mais rápido chega lá!`}
+
+if(m.includes('reserva')||m.includes('emergência')||m.includes('emergencia')){const meses=saldo>0?Math.round(saldo*12/Math.max(desp,1)):0;return`<strong>🛡️ Reserva de Emergência</strong><br><br>Sua despesa mensal: <strong>${moeda(desp)}</strong><br>Reserva recomendada (6 meses): <strong>${moeda(desp*6)}</strong><br><br>${meses>=6?'✅ Sua sobra anual já cobre '+meses+' meses. Ótimo!':'💡 Prazo para construir: '+(saldo>0?Math.ceil(desp*6/saldo)+' meses':'Sem sobra disponível')}<br><br><strong>Onde guardar:</strong><br>• Tesouro Selic (governo, seguro)<br>• CDB com liquidez diária (bancos digitais)<br>• Nunca em ações ou renda variável!`}
+
+return`Com base no seu perfil:<br>• Renda: <strong>${moeda(rec)}</strong><br>• Despesas: <strong>${moeda(desp)}</strong><br>• Investimentos: <strong>${moeda(inv)}</strong><br>• Sobra: <strong>${moeda(saldo)}</strong><br>• Dívidas: <strong>${moeda(div)}</strong><br><br>Pergunte sobre: comprar algo, gastos, investimentos, dívidas, aposentadoria ou reserva de emergência.`
+}
+
+carregar()
+</script>
+</body>
+</html>

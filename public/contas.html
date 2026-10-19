@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-layout.css">
+    <style>
+        .content { max-width: 800px; margin: 0 auto; }
+
+        .btn-novo {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 12px; margin-bottom: 20px;
+            background: #4f46e5; color: #fff; border: none; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-novo:hover { background: #4338ca; }
+
+        /* Resumo */
+        .resumo-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; margin-bottom: 20px;
+        }
+        .resumo-card {
+            background: #fff; border-radius: 10px; padding: 14px 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center;
+        }
+        .resumo-card .label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
+        .resumo-card .valor { font-size: 1rem; font-weight: 700; color: #1e1b4b; }
+
+        /* Cards de contas */
+        .contas-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 14px;
+        }
+        .conta-card {
+            background: #fff; border-radius: 12px; padding: 18px 18px 14px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08); position: relative;
+            border-top: 4px solid #4f46e5; cursor: pointer;
+        }
+        .conta-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .conta-card.inativa { border-top-color: #9ca3af; opacity: 0.65; }
+
+        .conta-tipo-badge {
+            position: absolute; top: 14px; right: 14px;
+            font-size: 0.7rem; padding: 2px 8px; border-radius: 99px;
+            font-weight: 600; text-transform: uppercase;
+        }
+        .tipo-corrente    { background: #ede9fe; color: #5b21b6; }
+        .tipo-poupanca    { background: #d1fae5; color: #065f46; }
+        .tipo-investimento{ background: #dbeafe; color: #1e40af; }
+        .tipo-carteira    { background: #fef9c3; color: #92400e; }
+        .tipo-outro       { background: #f3f4f6; color: #374151; }
+
+        .conta-banco { font-size: 0.8rem; color: #9ca3af; margin-bottom: 6px; }
+        .conta-desc  { font-size: 1rem; font-weight: 700; color: #1e1b4b; margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 60px; }
+        .conta-saldo-label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; }
+        .conta-saldo { font-size: 1.3rem; font-weight: 800; color: #1e1b4b; }
+        .conta-saldo.negativo { color: #ef4444; }
+
+        .empty-state { text-align: center; padding: 48px 16px; color: #9ca3af; font-size: 0.9rem; }
+        .loading { text-align: center; color: #9ca3af; padding: 32px; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); justify-content: center;
+            align-items: flex-end; z-index: 100;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #fff; border-radius: 16px 16px 0 0; padding: 28px 24px;
+            width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+        }
+        .modal-drag { width: 40px; height: 4px; background: #e5e7eb; border-radius: 99px; margin: 0 auto 20px; }
+        .modal h2 { font-size: 1.1rem; color: #1e1b4b; font-weight: 700; margin-bottom: 20px; }
+
+        .field-group { position: relative; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+        .field-label { position: absolute; top: -9px; left: 12px; background: #fff; padding: 0 4px; font-size: 0.75rem; color: #6b7280; }
+        .field-group input, .field-group select {
+            width: 100%; border: none; outline: none; font-size: 0.95rem;
+            color: #1e1b4b; background: transparent; padding: 4px 0;
+        }
+        .field-group select { cursor: pointer; }
+
+        .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f3f4f6; }
+        .btn { padding: 10px 20px; border: none; border-radius: 99px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .btn-primary   { background: #4f46e5; color: #fff; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-secondary { background: none; color: #4f46e5; border: 1px solid #4f46e5; }
+        .btn-danger    { background: #fee2e2; color: #ef4444; }
+        .msg { font-size: 0.8rem; color: #ef4444; text-align: center; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<script src="/shared-layout.js"></script>
+
+<div class="content">
+    <div class="resumo-grid" id="resumo-grid"></div>
+    <button class="btn-novo" onclick="abrirModalNovo()">+ Nova Conta</button>
+    <div class="contas-grid" id="lista-contas"><div class="loading">Carregando...</div></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <div class="modal-drag"></div>
+        <h2 id="modal-titulo">Nova Conta</h2>
+        <form id="form-conta">
+            <input type="hidden" id="conta-id">
+
+            <div class="field-group">
+                <span class="field-label">Descrição</span>
+                <input type="text" id="conta-descricao" required placeholder="Ex: Conta Corrente Bradesco">
+            </div>
+
+            <div class="field-group">
+                <span class="field-label">Tipo</span>
+                <select id="conta-tipo">
+                    <option value="corrente">Corrente</option>
+                    <option value="poupanca">Poupança</option>
+                    <option value="investimento">Investimento</option>
+                    <option value="carteira">Carteira</option>
+                    <option value="outro">Outro</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <span class="field-label">Banco / Instituição</span>
+                <input type="text" id="conta-banco" placeholder="Ex: Nubank, Itaú, XP...">
+            </div>
+
+            <div class="field-group" id="campo-saldo-inicial">
+                <span class="field-label">Saldo Inicial (R$)</span>
+                <input type="number" id="conta-saldo-inicial" step="0.01" placeholder="0,00" value="0">
+            </div>
+
+            <p class="msg" id="modal-msg"></p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-excluir" onclick="excluirConta()" style="display:none">Excluir</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function moeda(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) }
+
+let contas = []
+
+async function carregar() {
+    const res = await fetch('/contas')
+    contas = await res.json()
+    renderResumo()
+    renderContas()
+}
+
+function tipoLabel(tipo) {
+    const map = { corrente:'Corrente', poupanca:'Poupança', investimento:'Investimento', carteira:'Carteira', outro:'Outro' }
+    return map[tipo] || tipo
+}
+function tipoCls(tipo) {
+    return `tipo-${tipo}`
+}
+
+function renderResumo() {
+    const ativas = contas.filter(c => c.ativo)
+    const total = ativas.reduce((s,c) => s + Number(c.saldo_atual||0), 0)
+    const positivo = ativas.filter(c => Number(c.saldo_atual) >= 0).reduce((s,c) => s + Number(c.saldo_atual||0), 0)
+    const negativo = ativas.filter(c => Number(c.saldo_atual) < 0).reduce((s,c) => s + Number(c.saldo_atual||0), 0)
+
+    document.getElementById('resumo-grid').innerHTML = `
+        <div class="resumo-card"><div class="label">Saldo Total</div><div class="valor">${moeda(total)}</div></div>
+        <div class="resumo-card"><div class="label">Positivo</div><div class="valor" style="color:#16a34a">${moeda(positivo)}</div></div>
+        <div class="resumo-card"><div class="label">Contas Ativas</div><div class="valor">${ativas.length}</div></div>
+    `
+}
+
+function renderContas() {
+    const el = document.getElementById('lista-contas')
+    if (!contas.length) {
+        el.innerHTML = '<div class="empty-state">Nenhuma conta cadastrada.<br>Clique em "+ Nova Conta" para começar.</div>'
+        return
+    }
+    el.innerHTML = contas.map(c => {
+        const saldoNeg = Number(c.saldo_atual) < 0
+        return `
+        <div class="conta-card ${c.ativo ? '' : 'inativa'}" onclick='abrirModalEditar(${JSON.stringify(c).replace(/'/g,"&#39;")})'>
+            <span class="conta-tipo-badge ${tipoCls(c.tipo)}">${tipoLabel(c.tipo)}</span>
+            <div class="conta-banco">${c.banco || '—'}</div>
+            <div class="conta-desc">${c.descricao}</div>
+            <div class="conta-saldo-label">Saldo Atual</div>
+            <div class="conta-saldo ${saldoNeg ? 'negativo' : ''}">${moeda(c.saldo_atual)}</div>
+        </div>`
+    }).join('')
+}
+
+function abrirModalNovo() {
+    document.getElementById('modal-titulo').textContent = 'Nova Conta'
+    document.getElementById('conta-id').value = ''
+    document.getElementById('form-conta').reset()
+    document.getElementById('btn-excluir').style.display = 'none'
+    document.getElementById('modal-msg').textContent = ''
+    document.getElementById('campo-saldo-inicial').style.display = ''
+    document.getElementById('modal-overlay').classList.add('open')
+}
+
+function abrirModalEditar(c) {
+    document.getElementById('modal-titulo').textContent = 'Editar Conta'
+    document.getElementById('conta-id').value = c.id_conta
+    document.getElementById('conta-descricao').value = c.descricao || ''
+    document.getElementById('conta-tipo').value = c.tipo || 'corrente'
+    document.getElementById('conta-banco').value = c.banco || ''
+    document.getElementById('btn-excluir').style.display = 'inline-block'
+    document.getElementById('modal-msg').textContent = ''
+    document.getElementById('campo-saldo-inicial').style.display = 'none'
+    document.getElementById('modal-overlay').classList.add('open')
+}
+
+function fecharModal() { document.getElementById('modal-overlay').classList.remove('open') }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModal() })
+
+document.getElementById('form-conta').addEventListener('submit', async e => {
+    e.preventDefault()
+    const id = document.getElementById('conta-id').value
+    const body = {
+        descricao:     document.getElementById('conta-descricao').value,
+        tipo:          document.getElementById('conta-tipo').value,
+        banco:         document.getElementById('conta-banco').value || null,
+        saldo_inicial: id ? undefined : Number(document.getElementById('conta-saldo-inicial').value || 0),
+    }
+    if (id) delete body.saldo_inicial
+
+    let res
+    if (id) {
+        res = await fetch(`/contas/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    } else {
+        res = await fetch('/contas', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    }
+
+    if (res.ok) { fecharModal(); await carregar() }
+    else { document.getElementById('modal-msg').textContent = 'Erro ao salvar.' }
+})
+
+async function excluirConta() {
+    const id = document.getElementById('conta-id').value
+    if (!id || !confirm('Excluir esta conta?')) return
+    const res = await fetch(`/contas/${id}`, { method: 'DELETE' })
+    if (res.ok) { fecharModal(); await carregar() }
+}
+
+carregar()
+</script>
+</body>
+</html>

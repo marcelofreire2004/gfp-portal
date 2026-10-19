@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programas de Fidelidade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-layout.css">
+    <style>
+        .content { max-width: 800px; margin: 0 auto; }
+
+        .btn-novo {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 12px; margin-bottom: 20px;
+            background: #4f46e5; color: #fff; border: none; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-novo:hover { background: #4338ca; }
+
+        /* Resumo */
+        .resumo-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; margin-bottom: 20px;
+        }
+        .resumo-card {
+            background: #fff; border-radius: 10px; padding: 14px 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center;
+        }
+        .resumo-card .label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
+        .resumo-card .valor { font-size: 1rem; font-weight: 700; color: #1e1b4b; }
+
+        /* Cards de programas */
+        .programas-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+        }
+        .programa-card {
+            background: #fff; border-radius: 12px; padding: 18px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08); border-top: 4px solid #7c3aed;
+        }
+        .programa-card.inativo { border-top-color: #9ca3af; opacity: 0.65; }
+
+        .prog-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .prog-nome { font-size: 1rem; font-weight: 700; color: #1e1b4b; }
+        .prog-tipo-badge {
+            font-size: 0.7rem; padding: 2px 8px; border-radius: 99px;
+            font-weight: 600; text-transform: uppercase;
+        }
+        .tipo-milhas    { background: #ede9fe; color: #5b21b6; }
+        .tipo-pontos    { background: #dbeafe; color: #1e40af; }
+        .tipo-cashback  { background: #d1fae5; color: #065f46; }
+
+        .prog-saldo-label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; }
+        .prog-saldo { font-size: 1.4rem; font-weight: 800; color: #7c3aed; }
+        .prog-saldo-unit { font-size: 0.75rem; color: #9ca3af; }
+        .prog-valor-brl { font-size: 0.82rem; color: #6b7280; margin: 4px 0 12px; }
+        .prog-venc { font-size: 0.72rem; color: #9ca3af; }
+        .prog-venc.vencendo { color: #f59e0b; }
+
+        .prog-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .prog-btn {
+            flex: 1; padding: 8px; border-radius: 8px; border: none; cursor: pointer;
+            font-size: 0.8rem; font-weight: 600;
+        }
+        .prog-btn-mov  { background: #ede9fe; color: #5b21b6; }
+        .prog-btn-edit { background: #f3f4f6; color: #374151; }
+        .prog-btn-hist { background: #f0fdf4; color: #065f46; }
+
+        /* Painel de movimentações */
+        .mov-panel {
+            display: none; margin-top: 14px; border-top: 1px solid #f3f4f6; padding-top: 14px;
+        }
+        .mov-panel.open { display: block; }
+        .mov-title { font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; }
+        .mov-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 0; border-bottom: 1px solid #f9f9f9;
+        }
+        .mov-item:last-child { border-bottom: none; }
+        .mov-tipo {
+            width: 28px; height: 28px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;
+        }
+        .mov-credito { background: #d1fae5; }
+        .mov-debito  { background: #fee2e2; }
+        .mov-info { flex: 1; }
+        .mov-desc { font-size: 0.82rem; color: #1e1b4b; }
+        .mov-data { font-size: 0.72rem; color: #9ca3af; }
+        .mov-qtd { font-size: 0.85rem; font-weight: 700; }
+        .mov-qtd.credito { color: #16a34a; }
+        .mov-qtd.debito  { color: #ef4444; }
+
+        .empty-state { text-align: center; padding: 48px 16px; color: #9ca3af; font-size: 0.9rem; }
+        .loading { text-align: center; color: #9ca3af; padding: 32px; }
+
+        /* Modais */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); justify-content: center;
+            align-items: flex-end; z-index: 100;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #fff; border-radius: 16px 16px 0 0; padding: 28px 24px;
+            width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+        }
+        .modal-drag { width: 40px; height: 4px; background: #e5e7eb; border-radius: 99px; margin: 0 auto 20px; }
+        .modal h2 { font-size: 1.1rem; color: #1e1b4b; font-weight: 700; margin-bottom: 20px; }
+
+        .field-group { position: relative; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+        .field-label { position: absolute; top: -9px; left: 12px; background: #fff; padding: 0 4px; font-size: 0.75rem; color: #6b7280; }
+        .field-group input, .field-group select, .field-group textarea {
+            width: 100%; border: none; outline: none; font-size: 0.95rem;
+            color: #1e1b4b; background: transparent; padding: 4px 0;
+        }
+        .field-group select { cursor: pointer; }
+
+        .tipo-btns { display: flex; gap: 8px; margin-bottom: 14px; }
+        .tipo-btn {
+            flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db;
+            background: #fff; font-size: 0.85rem; cursor: pointer; font-weight: 600;
+        }
+        .tipo-btn.sel-credito { background: #d1fae5; border-color: #16a34a; color: #065f46; }
+        .tipo-btn.sel-debito  { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+
+        .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f3f4f6; }
+        .btn { padding: 10px 20px; border: none; border-radius: 99px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .btn-primary   { background: #4f46e5; color: #fff; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-secondary { background: none; color: #4f46e5; border: 1px solid #4f46e5; }
+        .btn-danger    { background: #fee2e2; color: #ef4444; }
+        .msg { font-size: 0.8rem; color: #ef4444; text-align: center; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<script src="/shared-layout.js"></script>
+
+<div class="content">
+    <div class="resumo-grid" id="resumo-grid"></div>
+    <button class="btn-novo" onclick="abrirModalNovo()">+ Novo Programa</button>
+    <div class="programas-grid" id="lista-programas"><div class="loading">Carregando...</div></div>
+</div>
+
+<!-- Modal Programa -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <div class="modal-drag"></div>
+        <h2 id="modal-titulo">Novo Programa</h2>
+        <form id="form-programa">
+            <input type="hidden" id="prog-id">
+            <div class="field-group">
+                <span class="field-label">Nome do Programa</span>
+                <input type="text" id="prog-nome" required placeholder="Ex: LATAM Pass, Smiles, TudoAzul">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Tipo</span>
+                <select id="prog-tipo">
+                    <option value="milhas">Milhas</option>
+                    <option value="pontos">Pontos</option>
+                    <option value="cashback">Cashback</option>
+                </select>
+            </div>
+            <div class="field-group" id="campo-saldo-prog">
+                <span class="field-label">Saldo Inicial</span>
+                <input type="number" id="prog-saldo-inicial" step="0.01" min="0" placeholder="0" value="0">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Valor por Ponto/Milha (R$)</span>
+                <input type="number" id="prog-valor-ponto" step="0.000001" min="0" placeholder="Ex: 0,014000" value="0">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Vencimento dos Pontos</span>
+                <input type="date" id="prog-vencimento">
+            </div>
+            <p class="msg" id="modal-msg"></p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-excluir" onclick="excluirPrograma()" style="display:none">Excluir</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Movimentação -->
+<div class="modal-overlay" id="modal-mov-overlay">
+    <div class="modal">
+        <div class="modal-drag"></div>
+        <h2 id="modal-mov-titulo">Lançar Pontos/Milhas</h2>
+        <form id="form-mov">
+            <input type="hidden" id="mov-prog-id">
+            <div style="font-size:0.85rem;color:#374151;margin-bottom:8px;font-weight:600">Tipo de Lançamento</div>
+            <div class="tipo-btns">
+                <button type="button" class="tipo-btn sel-credito" id="btn-credito" onclick="selTipo('credito')">➕ Crédito</button>
+                <button type="button" class="tipo-btn" id="btn-debito" onclick="selTipo('debito')">➖ Débito</button>
+            </div>
+            <input type="hidden" id="mov-tipo" value="credito">
+            <div class="field-group">
+                <span class="field-label">Quantidade</span>
+                <input type="number" id="mov-quantidade" required step="0.01" min="0.01" placeholder="0">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Descrição</span>
+                <input type="text" id="mov-descricao" placeholder="Ex: Compra Mercado Livre">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Data</span>
+                <input type="date" id="mov-data">
+            </div>
+            <p class="msg" id="modal-mov-msg"></p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="fecharModalMov()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Lançar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function moeda(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) }
+function fmtNum(v) { return Number(v||0).toLocaleString('pt-BR') }
+function fmtData(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('pt-BR') }
+function hoje() { return new Date().toISOString().split('T')[0] }
+
+let programas = []
+let tipoMov = 'credito'
+const movsCarregadas = {}
+
+async function carregar() {
+    const res = await fetch('/programas-fidelidade')
+    programas = await res.json()
+    renderResumo()
+    renderProgramas()
+}
+
+function renderResumo() {
+    const ativos = programas.filter(p => p.ativo)
+    const totalPontos = ativos.reduce((s,p) => s + Number(p.saldo_atual||0), 0)
+    const valorBrl    = ativos.reduce((s,p) => s + Number(p.saldo_atual||0) * Number(p.valor_por_ponto||0), 0)
+    document.getElementById('resumo-grid').innerHTML = `
+        <div class="resumo-card"><div class="label">Programas</div><div class="valor">${ativos.length}</div></div>
+        <div class="resumo-card"><div class="label">Total de Pontos</div><div class="valor">${fmtNum(totalPontos)}</div></div>
+        <div class="resumo-card"><div class="label">Valor Estimado</div><div class="valor" style="color:#7c3aed">${moeda(valorBrl)}</div></div>
+    `
+}
+
+function renderProgramas() {
+    const el = document.getElementById('lista-programas')
+    if (!programas.length) {
+        el.innerHTML = '<div class="empty-state">Nenhum programa cadastrado.</div>'
+        return
+    }
+    el.innerHTML = programas.map(p => {
+        const valorBrl = Number(p.saldo_atual||0) * Number(p.valor_por_ponto||0)
+        const tipoNome = { milhas:'Milhas', pontos:'Pontos', cashback:'Cashback' }[p.tipo] || p.tipo
+        const unidade  = p.tipo === 'cashback' ? '' : (p.tipo === 'milhas' ? ' milhas' : ' pontos')
+
+        const hoje = new Date()
+        const venc = p.vencimento ? new Date(p.vencimento) : null
+        const vencendo = venc && (venc - hoje) < 90 * 24 * 60 * 60 * 1000
+
+        return `
+        <div class="programa-card ${p.ativo ? '' : 'inativo'}" id="card-prog-${p.id_programa}">
+            <div class="prog-header">
+                <div class="prog-nome">${p.nome}</div>
+                <span class="prog-tipo-badge tipo-${p.tipo}">${tipoNome}</span>
+            </div>
+            <div class="prog-saldo-label">Saldo Atual</div>
+            <div class="prog-saldo">${p.tipo === 'cashback' ? moeda(p.saldo_atual) : fmtNum(p.saldo_atual)}<span class="prog-saldo-unit">${unidade}</span></div>
+            ${p.valor_por_ponto > 0 ? `<div class="prog-valor-brl">≈ ${moeda(valorBrl)}</div>` : '<div style="height:22px"></div>'}
+            ${venc ? `<div class="prog-venc ${vencendo ? 'vencendo' : ''}">Vence: ${fmtData(p.vencimento)}${vencendo ? ' ⚠️' : ''}</div>` : ''}
+            <div class="prog-actions">
+                <button class="prog-btn prog-btn-mov"  onclick="abrirModalMov(${p.id_programa}, '${p.nome}')">+ / − Pontos</button>
+                <button class="prog-btn prog-btn-hist" onclick="toggleHistorico(${p.id_programa})">📋 Histórico</button>
+                <button class="prog-btn prog-btn-edit" onclick="abrirModalEditar(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>
+            </div>
+            <div class="mov-panel" id="hist-${p.id_programa}">
+                <div class="mov-title">Carregando...</div>
+            </div>
+        </div>`
+    }).join('')
+}
+
+async function toggleHistorico(id) {
+    const el = document.getElementById(`hist-${id}`)
+    const aberto = el.classList.contains('open')
+    el.classList.toggle('open', !aberto)
+
+    if (!aberto && !movsCarregadas[id]) {
+        movsCarregadas[id] = true
+        const res = await fetch(`/programas-fidelidade/${id}/movimentacoes`)
+        const movs = await res.json()
+        renderHistorico(id, movs)
+    }
+}
+
+function renderHistorico(id, movs) {
+    const el = document.getElementById(`hist-${id}`)
+    if (!movs.length) {
+        el.innerHTML = '<div class="mov-title">Nenhuma movimentação.</div>'
+        return
+    }
+    el.innerHTML = `
+        <div class="mov-title">Histórico (${movs.length})</div>
+        ${movs.slice(0, 20).map(m => `
+        <div class="mov-item">
+            <div class="mov-tipo ${m.tipo_mov === 'credito' ? 'mov-credito' : 'mov-debito'}">
+                ${m.tipo_mov === 'credito' ? '➕' : '➖'}
+            </div>
+            <div class="mov-info">
+                <div class="mov-desc">${m.descricao || '—'}</div>
+                <div class="mov-data">${fmtData(m.data_mov)}</div>
+            </div>
+            <div class="mov-qtd ${m.tipo_mov}">
+                ${m.tipo_mov === 'credito' ? '+' : '-'}${fmtNum(m.quantidade)}
+            </div>
+        </div>`).join('')}`
+}
+
+function abrirModalNovo() {
+    document.getElementById('modal-titulo').textContent = 'Novo Programa'
+    document.getElementById('prog-id').value = ''
+    document.getElementById('form-programa').reset()
+    document.getElementById('prog-saldo-inicial').value = 0
+    document.getElementById('prog-valor-ponto').value = 0
+    document.getElementById('btn-excluir').style.display = 'none'
+    document.getElementById('modal-msg').textContent = ''
+    document.getElementById('campo-saldo-prog').style.display = ''
+    document.getElementById('modal-overlay').classList.add('open')
+}
+
+function abrirModalEditar(p) {
+    document.getElementById('modal-titulo').textContent = 'Editar Programa'
+    document.getElementById('prog-id').value = p.id_programa
+    document.getElementById('prog-nome').value = p.nome || ''
+    document.getElementById('prog-tipo').value = p.tipo || 'milhas'
+    document.getElementById('prog-valor-ponto').value = p.valor_por_ponto || 0
+    document.getElementById('prog-vencimento').value = p.vencimento ? p.vencimento.split('T')[0] : ''
+    document.getElementById('btn-excluir').style.display = 'inline-block'
+    document.getElementById('modal-msg').textContent = ''
+    document.getElementById('campo-saldo-prog').style.display = 'none'
+    document.getElementById('modal-overlay').classList.add('open')
+}
+
+function fecharModal() { document.getElementById('modal-overlay').classList.remove('open') }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModal() })
+
+document.getElementById('form-programa').addEventListener('submit', async e => {
+    e.preventDefault()
+    const id = document.getElementById('prog-id').value
+    const body = {
+        nome:           document.getElementById('prog-nome').value,
+        tipo:           document.getElementById('prog-tipo').value,
+        valor_por_ponto:Number(document.getElementById('prog-valor-ponto').value) || 0,
+        vencimento:     document.getElementById('prog-vencimento').value || null,
+    }
+    if (!id) {
+        body.saldo_atual = Number(document.getElementById('prog-saldo-inicial').value) || 0
+    }
+
+    let res
+    if (id) {
+        res = await fetch(`/programas-fidelidade/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    } else {
+        res = await fetch('/programas-fidelidade', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    }
+
+    if (res.ok) { fecharModal(); await carregar() }
+    else { document.getElementById('modal-msg').textContent = 'Erro ao salvar.' }
+})
+
+async function excluirPrograma() {
+    const id = document.getElementById('prog-id').value
+    if (!id || !confirm('Excluir este programa e todo seu histórico?')) return
+    const res = await fetch(`/programas-fidelidade/${id}`, { method: 'DELETE' })
+    if (res.ok) { fecharModal(); await carregar() }
+}
+
+// Modal de Movimentação
+function selTipo(tipo) {
+    tipoMov = tipo
+    document.getElementById('mov-tipo').value = tipo
+    document.getElementById('btn-credito').className = `tipo-btn ${tipo === 'credito' ? 'sel-credito' : ''}`
+    document.getElementById('btn-debito').className  = `tipo-btn ${tipo === 'debito'  ? 'sel-debito'  : ''}`
+}
+
+function abrirModalMov(id, nome) {
+    document.getElementById('modal-mov-titulo').textContent = `Lançar — ${nome}`
+    document.getElementById('mov-prog-id').value = id
+    document.getElementById('form-mov').reset()
+    document.getElementById('mov-data').value = hoje()
+    document.getElementById('modal-mov-msg').textContent = ''
+    selTipo('credito')
+    document.getElementById('modal-mov-overlay').classList.add('open')
+}
+
+function fecharModalMov() { document.getElementById('modal-mov-overlay').classList.remove('open') }
+document.getElementById('modal-mov-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalMov() })
+
+document.getElementById('form-mov').addEventListener('submit', async e => {
+    e.preventDefault()
+    const id = document.getElementById('mov-prog-id').value
+    const body = {
+        tipo_mov:   document.getElementById('mov-tipo').value,
+        quantidade: Number(document.getElementById('mov-quantidade').value),
+        descricao:  document.getElementById('mov-descricao').value || null,
+        data_mov:   document.getElementById('mov-data').value,
+    }
+
+    const res = await fetch(`/programas-fidelidade/${id}/movimentacoes`, {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    })
+
+    if (res.ok) {
+        fecharModalMov()
+        delete movsCarregadas[id]
+        await carregar()
+    } else {
+        document.getElementById('modal-mov-msg').textContent = 'Erro ao lançar.'
+    }
+})
+
+carregar()
+</script>
+</body>
+</html>

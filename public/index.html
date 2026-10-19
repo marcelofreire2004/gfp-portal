@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-layout.css">
+    <style>
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            font-size: 1.4rem;
+            color: var(--text);
+        }
+
+        /* Search */
+        .search-bar {
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            width: 300px;
+        }
+
+        /* Botões */
+        .btn {
+            padding: 9px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary   { background: #4f46e5; color: #fff; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-warning   { background: #f59e0b; color: #fff; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-danger    { background: #ef4444; color: #fff; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+
+        /* Tabela */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        thead { background: var(--primary, #4f46e5); color: #fff; }
+        thead th { padding: 13px 16px; text-align: left; font-size: 0.85rem; }
+
+        tbody tr { border-bottom: 1px solid var(--border-light, #f0f0f0); }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--surface-hover, #f9f9f9); }
+        tbody td { padding: 12px 16px; font-size: 0.9rem; color: var(--text, #444); vertical-align: middle; }
+
+        .actions { display: flex; gap: 8px; }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: #888;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: #fff;
+            border-radius: 8px;
+            padding: 32px;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        .modal h2 { font-size: 1.1rem; margin-bottom: 20px; color: #1e1b4b; }
+        .modal label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 4px; }
+        .modal input {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #ccc; border-radius: 6px;
+            font-size: 0.95rem; margin-bottom: 14px;
+        }
+        .modal input:focus { outline: none; border-color: #4f46e5; }
+        .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+
+        .msg { margin-top: 10px; font-size: 0.85rem; text-align: center; }
+        .msg.success { color: #16a34a; }
+        .msg.error   { color: #dc2626; }
+    </style>
+</head>
+<body>
+<script src="/shared-layout.js"></script>
+
+    <!-- Internal CRUD navigation tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+        <button onclick="trocarCrud('cartoes')" id="nav-cartoes" class="crud-tab" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:inherit">💳 Cartões</button>
+        <button onclick="trocarCrud('categorias')" id="nav-categorias" class="crud-tab" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:inherit">📂 Categorias</button>
+        <a href="/contas-page" id="nav-contas" class="crud-tab" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .15s;text-decoration:none;font-family:inherit">🏦 Contas</a>
+        <button onclick="trocarCrud('formas-pagamento')" id="nav-formas-pagamento" class="crud-tab" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:inherit">💰 Formas de Pagamento</button>
+        <a href="/dividas-page" id="nav-dividas" class="crud-tab" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .15s;text-decoration:none;font-family:inherit">💳 Dívidas</a>
+        <a href="/metas-page" id="nav-metas" class="crud-tab" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .15s;text-decoration:none;font-family:inherit">🎯 Metas</a>
+        <a href="/programas-page" id="nav-programas" class="crud-tab" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .15s;text-decoration:none;font-family:inherit">✈️ Fidelidade</a>
+        <button onclick="abrirConfirmacaoLimpeza()" id="nav-limpar" class="crud-tab" style="padding:8px 16px;border:1.5px solid #EF4444;border-radius:var(--radius-sm);background:#FEE2E2;font-size:.82rem;font-weight:600;cursor:pointer;color:#EF4444;transition:all .15s;font-family:inherit;margin-left:auto">🗑 Apagar Dados</button>
+    </div>
+
+        <div class="page-header">
+            <h1 id="titulo-pagina">Cartões de Crédito</h1>
+            <button class="btn btn-primary" onclick="abrirModalNovo()">+ Novo</button>
+        </div>
+
+        <div class="search-bar" id="search-bar" style="display:none">
+            <input type="text" id="search" placeholder="Buscar..." oninput="buscar()">
+        </div>
+
+        <div id="conteudo"></div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <h2 id="modal-titulo">Novo registro</h2>
+            <form id="form-crud">
+                <input type="hidden" id="registro-id">
+                <div id="campos-modal"></div>
+                <p class="msg" id="modal-msg"></p>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Configuração de cada CRUD
+        const cruds = {
+            videos: {
+                titulo: 'Vídeos',
+                endpoint: '/videos',
+                busca: true,
+                colunas: ['Título', 'Descrição', 'Duração'],
+                campos: [
+                    { id: 'title',     label: 'Título',            type: 'text',   required: true },
+                    { id: 'descricao', label: 'Descrição',         type: 'text',   required: true },
+                    { id: 'duracao',   label: 'Duração (segundos)', type: 'number', required: true, min: 1 },
+                ],
+                celulas: v => [v.title, v.descricao, formatarDuracao(v.duracao)],
+                body: () => ({
+                    title:    campo('title'),
+                    descricao: campo('descricao'),
+                    duracao:  Number(campo('duracao')),
+                }),
+            },
+            categorias: {
+                titulo: 'Categorias',
+                endpoint: '/categorias',
+                busca: false,
+                colunas: ['Descrição', 'Subcategorias'],
+                campos: [
+                    { id: 'descricao', label: 'Descrição', type: 'text', required: true },
+                ],
+                celulas: v => [v.descricao, v.subcategorias || '—'],
+                body: () => ({ descricao: campo('descricao'), palavras_chave: null }),
+                customEdit: true,
+            },
+            cartoes: {
+                titulo: 'Cartões de Crédito',
+                endpoint: '/cartoes',
+                busca: false,
+                colunas: ['Descrição', 'Dias p/ Fechamento', 'Dia Vencimento'],
+                campos: [
+                    { id: 'descricao',            label: 'Descrição',            type: 'text',   required: true },
+                    { id: 'qtd_dias_fechamento',  label: 'Dias p/ Fechamento',   type: 'number', required: true, min: 1 },
+                    { id: 'dia_vencimento',       label: 'Dia de Vencimento',    type: 'number', required: true, min: 1, max: 31 },
+                ],
+                celulas: v => [v.descricao, v.qtd_dias_fechamento, v.dia_vencimento],
+                body: () => ({
+                    descricao:           campo('descricao'),
+                    qtd_dias_fechamento: Number(campo('qtd_dias_fechamento')),
+                    dia_vencimento:      Number(campo('dia_vencimento')),
+                }),
+            },
+            'formas-pagamento': {
+                titulo: 'Formas de Pagamento',
+                endpoint: '/formas-pagamento',
+                busca: false,
+                colunas: ['Descrição'],
+                campos: [
+                    { id: 'descricao', label: 'Descrição', type: 'text', required: true },
+                ],
+                celulas: v => [v.descricao],
+                body: () => ({ descricao: campo('descricao') }),
+            },
+            orcamentos: {
+                titulo: 'Orçamentos',
+                endpoint: '/orcamentos',
+                busca: false,
+                idField: 'id_orcamento',
+                colunas: ['Ano', 'Usuário', 'Total Receita', 'Total Despesa', 'Total Investimento'],
+                campos: [
+                    { id: 'ano_orcamento',      label: 'Ano',              type: 'number', required: true, min: 2000 },
+                    { id: 'usuario',            label: 'Usuário',          type: 'text',   required: true },
+                    { id: 'total_receita',      label: 'Total Receita',    type: 'number', required: false },
+                    { id: 'total_despesa',      label: 'Total Despesa',    type: 'number', required: false },
+                    { id: 'total_investimento', label: 'Total Investimento', type: 'number', required: false },
+                ],
+                celulas: v => [v.ano_orcamento, v.usuario, formatarMoeda(v.total_receita), formatarMoeda(v.total_despesa), formatarMoeda(v.total_investimento)],
+                body: () => ({
+                    ano_orcamento:      Number(campo('ano_orcamento')),
+                    usuario:            campo('usuario'),
+                    total_receita:      Number(campo('total_receita') || 0),
+                    total_despesa:      Number(campo('total_despesa') || 0),
+                    total_investimento: Number(campo('total_investimento') || 0),
+                }),
+            },
+            'detalhes-orcamento': {
+                titulo: 'Detalhes do Orçamento',
+                endpoint: '/orcamentos',
+                busca: false,
+                idField: 'id_detalhe_orcamento',
+                subrecurso: 'detalhes',
+                filtroLabel: 'ID do Orçamento',
+                filtroId: 'filtro-id-orcamento',
+                colunas: ['Categoria', 'Tipo', 'Periodicidade', 'Mês', 'Valor Previsto', 'Valor Pago'],
+                campos: [
+                    { id: 'id_orcamento',      label: 'ID Orçamento',    type: 'number', required: true },
+                    { id: 'id_categoria',      label: 'ID Categoria',    type: 'number', required: true },
+                    { id: 'id_subcategoria',   label: 'ID Subcategoria', type: 'number', required: true },
+                    { id: 'tipo',              label: 'Tipo (DESPESA/RECEITA/INVESTIMENTO)', type: 'text', required: true },
+                    { id: 'periodicidade',     label: 'Periodicidade',   type: 'text',   required: true },
+                    { id: 'forma_pgto',        label: 'Forma Pagto',     type: 'text',   required: false },
+                    { id: 'mes_transacao',     label: 'Mês',             type: 'number', required: false, min: 1, max: 12 },
+                    { id: 'ano_transacao',     label: 'Ano',             type: 'number', required: false },
+                    { id: 'valor_previsto',    label: 'Valor Previsto',  type: 'number', required: true },
+                    { id: 'valor_pago',        label: 'Valor Pago',      type: 'number', required: false },
+                    { id: 'observacao',        label: 'Observação',      type: 'text',   required: false },
+                ],
+                celulas: v => [v.nome_categoria ?? v.id_categoria, v.tipo, v.periodicidade, v.mes_transacao ?? '-', formatarMoeda(v.valor_previsto), formatarMoeda(v.valor_pago)],
+                body: () => ({
+                    id_orcamento:    Number(campo('id_orcamento')),
+                    id_categoria:    Number(campo('id_categoria')),
+                    id_subcategoria: Number(campo('id_subcategoria')),
+                    tipo:            campo('tipo'),
+                    periodicidade:   campo('periodicidade'),
+                    forma_pgto:      campo('forma_pgto') || null,
+                    mes_transacao:   Number(campo('mes_transacao')) || null,
+                    ano_transacao:   Number(campo('ano_transacao')) || null,
+                    valor_previsto:  Number(campo('valor_previsto')),
+                    valor_pago:      Number(campo('valor_pago') || 0),
+                    observacao:      campo('observacao') || null,
+                }),
+            },
+        }
+
+        let crudAtual = 'videos'
+
+        function campo(id) {
+            return document.getElementById(id)?.value ?? ''
+        }
+
+        function formatarDuracao(s) {
+            const m = Math.floor(s / 60)
+            const r = s % 60
+            return m > 0 ? `${m}m ${r}s` : `${r}s`
+        }
+
+        function formatarMoeda(v) {
+            return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        }
+
+        // Troca de CRUD
+        function trocarCrud(nome) {
+            crudAtual = nome
+            document.querySelectorAll('.crud-tab').forEach(a => {
+                a.style.background = 'var(--surface)';
+                a.style.color = 'var(--text-secondary)';
+                a.style.borderColor = 'var(--border)';
+            })
+            const activeEl = document.getElementById(`nav-${nome}`)
+            if (activeEl) {
+                activeEl.style.background = 'var(--primary-light)';
+                activeEl.style.color = 'var(--primary)';
+                activeEl.style.borderColor = 'var(--primary)';
+            }
+            document.getElementById('titulo-pagina').textContent = cruds[nome].titulo
+            document.getElementById('search').value = ''
+            document.getElementById('search-bar').style.display = cruds[nome].busca ? 'block' : 'none'
+
+            // Filtro especial para sub-recursos
+            let filtroExtra = document.getElementById('filtro-extra')
+            if (!filtroExtra) {
+                filtroExtra = document.createElement('div')
+                filtroExtra.id = 'filtro-extra'
+                filtroExtra.style.marginBottom = '16px'
+                document.getElementById('search-bar').after(filtroExtra)
+            }
+            if (cruds[nome].filtroId) {
+                filtroExtra.innerHTML = `
+                    <label style="font-size:0.85rem;color:#555">${cruds[nome].filtroLabel}</label><br>
+                    <input type="number" id="${cruds[nome].filtroId}" placeholder="Ex: 1"
+                        style="padding:10px 12px;border:1px solid #ccc;border-radius:6px;font-size:0.95rem;width:200px;margin-top:4px"
+                        oninput="carregar()">
+                `
+            } else {
+                filtroExtra.innerHTML = ''
+            }
+
+            carregar()
+        }
+
+        // Carregar dados
+        async function carregar(search = '') {
+            const crud = cruds[crudAtual]
+            let url
+
+            if (crud.subrecurso) {
+                const filtroEl = document.getElementById(crud.filtroId)
+                const idOrc = filtroEl?.value
+                if (!idOrc) {
+                    document.getElementById('conteudo').innerHTML = '<div class="empty-state">Informe o ID do Orçamento para filtrar.</div>'
+                    return
+                }
+                url = `${crud.endpoint}/${idOrc}/${crud.subrecurso}`
+            } else {
+                url = search ? `${crud.endpoint}?search=${encodeURIComponent(search)}` : crud.endpoint
+            }
+
+            const res = await fetch(url)
+            const dados = await res.json()
+            renderizar(dados)
+        }
+
+        function getId(item) {
+            const crud = cruds[crudAtual]
+            return item[crud.idField ?? 'id']
+        }
+
+        function renderizar(dados) {
+            const crud = cruds[crudAtual]
+            const conteudo = document.getElementById('conteudo')
+
+            if (!dados.length) {
+                conteudo.innerHTML = '<div class="empty-state">Nenhum registro encontrado.</div>'
+                return
+            }
+
+            const ths = crud.colunas.map(c => `<th>${c}</th>`).join('') + '<th>Ações</th>'
+            const trs = dados.map(item => {
+                const tds = crud.celulas(item).map(v => `<td>${v ?? ''}</td>`).join('')
+                const dataAttr = `data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'`
+                const itemId = getId(item)
+                return `<tr>
+                    ${tds}
+                    <td>
+                        <div class="actions">
+                            <button class="btn btn-warning" ${dataAttr} onclick="abrirModalEditar(this)">Editar</button>
+                            <button class="btn btn-danger" onclick="excluir(${itemId}, ${item.id_orcamento ?? 'null'})">Excluir</button>
+                        </div>
+                    </td>
+                </tr>`
+            }).join('')
+
+            conteudo.innerHTML = `
+                <table>
+                    <thead><tr>${ths}</tr></thead>
+                    <tbody>${trs}</tbody>
+                </table>`
+        }
+
+        // Busca com debounce
+        let timer
+        function buscar() {
+            clearTimeout(timer)
+            timer = setTimeout(() => carregar(document.getElementById('search').value), 300)
+        }
+
+        // Modal
+        function renderizarCampos(valores = {}) {
+            const crud = cruds[crudAtual]
+            document.getElementById('campos-modal').innerHTML = crud.campos.map(f => `
+                <label for="${f.id}">${f.label}</label>
+                <input type="${f.type}" id="${f.id}"
+                    ${f.required ? 'required' : ''}
+                    ${f.min !== undefined ? `min="${f.min}"` : ''}
+                    ${f.max !== undefined ? `max="${f.max}"` : ''}
+                    value="${valores[f.id] ?? ''}">
+            `).join('')
+        }
+
+        function abrirModalNovo() {
+            document.getElementById('modal-titulo').textContent = `Novo — ${cruds[crudAtual].titulo}`
+            document.getElementById('registro-id').value = ''
+            document.getElementById('modal-msg').textContent = ''
+            renderizarCampos()
+            document.getElementById('modal-overlay').classList.add('open')
+        }
+
+        function abrirModalEditar(btn) {
+            const item = JSON.parse(btn.getAttribute('data-item'))
+            const crud = cruds[crudAtual]
+            
+            // Custom edit for categorias (with subcategories)
+            if (crud.customEdit && crudAtual === 'categorias') {
+                abrirModalEditarCategoria(item)
+                return
+            }
+            
+            document.getElementById('modal-titulo').textContent = `Editar — ${cruds[crudAtual].titulo}`
+            document.getElementById('registro-id').value = getId(item)
+            document.getElementById('modal-msg').textContent = ''
+            renderizarCampos(item)
+            document.getElementById('modal-overlay').classList.add('open')
+        }
+
+        async function abrirModalEditarCategoria(item) {
+            document.getElementById('modal-titulo').textContent = `Editar — ${item.descricao}`
+            document.getElementById('modal-titulo').dataset.catId = item.id
+            document.getElementById('registro-id').value = item.id
+            document.getElementById('modal-msg').textContent = ''
+            
+            // Buscar subcategorias com detalhe de uso
+            const res = await fetch(`/categorias/${item.id}/subcategorias-detalhe`)
+            const subs = await res.json()
+            
+            let html = `
+                <label>Descrição da Categoria</label>
+                <input type="text" id="descricao" value="${item.descricao}" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:.95rem;margin-bottom:14px">
+                <label style="display:block;margin-bottom:8px;font-size:.85rem;color:#555">Subcategorias</label>
+                <div id="subcats-container" style="max-height:300px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:10px">`
+            
+            subs.forEach(s => {
+                const emUso = Number(s.uso_count) > 0
+                const tipoDesp = s.tipo_despesa || 'variavel'
+                html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px" data-subid="${s.id_subcategoria}">
+                    <input type="text" value="${s.descricao}" style="flex:1;padding:8px 12px;border:1px solid #ccc;border-radius:6px;font-size:.9rem" data-original="${s.descricao}">
+                    <select onchange="atualizarTipoDespesa(${s.id_subcategoria},this.value)" style="padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:.72rem;font-weight:600;color:${tipoDesp==='fixa'?'#2563eb':'#9333ea'};background:${tipoDesp==='fixa'?'#eff6ff':'#faf5ff'};cursor:pointer;font-family:inherit">
+                        <option value="fixa" ${tipoDesp==='fixa'?'selected':''}>Fixa</option>
+                        <option value="variavel" ${tipoDesp==='variavel'?'selected':''}>Variável</option>
+                    </select>
+                    ${emUso 
+                        ? `<span style="font-size:.7rem;color:#16a34a;background:#dcfce7;padding:3px 8px;border-radius:99px;white-space:nowrap">Em uso (${s.uso_count})</span>`
+                        : `<button type="button" onclick="excluirSubcategoria(${s.id_subcategoria},this)" style="padding:6px 10px;background:#fee2e2;color:#ef4444;border:none;border-radius:6px;font-size:.8rem;cursor:pointer;font-weight:600">✕</button>`
+                    }
+                    <button type="button" onclick="moverSubcategoria(${s.id_subcategoria},'${s.descricao.replace(/'/g,"\\'")}')" style="padding:4px 8px;background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe;border-radius:6px;font-size:.7rem;cursor:pointer;font-weight:600;white-space:nowrap" title="Mover para outra categoria">↗ Mover</button>
+                </div>`
+            })
+            
+            html += `</div>
+                <button type="button" onclick="addNovaSubcategoria()" style="margin-top:8px;padding:8px 14px;background:#f3f4f6;border:1px dashed #d1d5db;border-radius:6px;font-size:.82rem;cursor:pointer;color:#6b7280;width:100%">+ Adicionar subcategoria</button>`
+            
+            document.getElementById('campos-modal').innerHTML = html
+            document.getElementById('modal-overlay').classList.add('open')
+        }
+
+        function addNovaSubcategoria() {
+            const container = document.getElementById('subcats-container')
+            const div = document.createElement('div')
+            div.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px'
+            div.dataset.subid = 'new'
+            div.innerHTML = `<input type="text" placeholder="Nova subcategoria..." style="flex:1;padding:8px 12px;border:1px solid #ccc;border-radius:6px;font-size:.9rem" data-original="">
+                <button type="button" onclick="this.parentElement.remove()" style="padding:6px 10px;background:#fee2e2;color:#ef4444;border:none;border-radius:6px;font-size:.8rem;cursor:pointer;font-weight:600">✕</button>`
+            container.appendChild(div)
+            div.querySelector('input').focus()
+        }
+
+        async function atualizarTipoDespesa(subId, tipo) {
+            try {
+                await fetch(`/subcategorias/${subId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tipo_despesa: tipo })
+                })
+            } catch (e) { console.error(e) }
+        }
+
+        async function excluirSubcategoria(id, btn) {
+            if (!confirm('Excluir esta subcategoria?')) return
+            const res = await fetch(`/subcategorias/${id}`, { method: 'DELETE' })
+            if (res.ok) { btn.closest('div').remove() }
+            else { const err = await res.json().catch(()=>null); alert(err?.message || 'Erro ao excluir.') }
+        }
+
+        async function moverSubcategoria(subId, nomeSubcat) {
+            // Buscar categorias para o select
+            const res = await fetch('/categorias')
+            const cats = await res.json()
+            // Categoria atual da subcategoria (é a que está sendo editada)
+            const catAtualId = document.getElementById('modal-titulo')?.dataset?.catId || ''
+            const options = cats.filter(c => String(c.id) !== String(catAtualId)).map(c => `<option value="${c.id}">${c.descricao}</option>`).join('')
+            
+            const container = document.getElementById('subcats-container')
+            // Criar um mini-form inline
+            const row = document.querySelector(`[data-subid="${subId}"]`)
+            if (!row) return
+            row.innerHTML = `
+                <div style="width:100%;display:flex;flex-direction:column;gap:6px;padding:8px;background:#f0f9ff;border-radius:8px;border:1px solid #bfdbfe">
+                    <div style="font-size:.78rem;font-weight:600;color:#1e40af">Mover "${nomeSubcat}" para:</div>
+                    <select id="mover-destino-${subId}" style="padding:8px 12px;border:1px solid #93c5fd;border-radius:6px;font-size:.85rem;font-family:inherit">
+                        <option value="">Selecione a categoria destino...</option>
+                        ${options}
+                    </select>
+                    <div style="display:flex;gap:6px">
+                        <button type="button" onclick="confirmarMover(${subId})" style="padding:6px 14px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:.78rem;cursor:pointer;font-weight:600">Confirmar</button>
+                        <button type="button" onclick="fecharModal();carregar()" style="padding:6px 14px;background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;border-radius:6px;font-size:.78rem;cursor:pointer;font-weight:600">Cancelar</button>
+                    </div>
+                </div>`
+        }
+
+        async function confirmarMover(subId) {
+            const destino = document.getElementById(`mover-destino-${subId}`)?.value
+            if (!destino) { alert('Selecione a categoria destino.'); return }
+            try {
+                const res = await fetch(`/subcategorias/${subId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoria_id: Number(destino) })
+                })
+                if (res.ok) {
+                    alert('✅ Subcategoria movida com sucesso!')
+                    fecharModal()
+                    carregar()
+                } else {
+                    const err = await res.json().catch(() => null)
+                    alert(err?.message || 'Erro ao mover.')
+                }
+            } catch (e) { alert('Erro de conexão.') }
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-overlay').classList.remove('open')
+        }
+
+        document.getElementById('modal-overlay').addEventListener('click', e => {
+            if (e.target === e.currentTarget) fecharModal()
+        })
+
+        // Salvar
+        document.getElementById('form-crud').addEventListener('submit', async e => {
+            e.preventDefault()
+            const crud   = cruds[crudAtual]
+            const id     = document.getElementById('registro-id').value
+            const isEdit = !!id
+            const msg    = document.getElementById('modal-msg')
+
+            // Custom save for categorias (handles subcategories)
+            if (crud.customEdit && crudAtual === 'categorias' && isEdit) {
+                try {
+                    // Save categoria description
+                    const descricao = document.getElementById('descricao')?.value
+                    await fetch(`/categorias/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ descricao, palavras_chave: null })
+                    })
+                    // Save subcategorias (update existing, create new)
+                    const subcatDivs = document.querySelectorAll('#subcats-container > div')
+                    for (const div of subcatDivs) {
+                        const subId = div.dataset.subid
+                        const input = div.querySelector('input')
+                        const newDesc = input?.value?.trim()
+                        if (!newDesc) continue
+                        if (subId === 'new') {
+                            // Create new subcategoria
+                            await fetch(`/categorias/${id}/nova-subcategoria`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ descricao: newDesc })
+                            })
+                        } else if (input.dataset.original !== newDesc) {
+                            // Update existing
+                            await fetch(`/subcategorias/${subId}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ descricao: newDesc })
+                            })
+                        }
+                    }
+                    fecharModal()
+                    carregar()
+                } catch { msg.textContent = 'Erro ao salvar.'; msg.className = 'msg error' }
+                return
+            }
+
+            let url, method
+
+            if (crud.subrecurso) {
+                const idOrc = campo('id_orcamento') || document.getElementById(crud.filtroId)?.value
+                url    = isEdit ? `${crud.endpoint}/${idOrc}/${crud.subrecurso}/${id}` : `${crud.endpoint}/${idOrc}/${crud.subrecurso}`
+                method = isEdit ? 'PUT' : 'POST'
+            } else {
+                url    = isEdit ? `${crud.endpoint}/${id}` : crud.endpoint
+                method = isEdit ? 'PUT' : 'POST'
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(crud.body()),
+                })
+
+                if (res.ok) {
+                    fecharModal()
+                    carregar(document.getElementById('search').value)
+                } else {
+                    msg.textContent = 'Erro ao salvar.'
+                    msg.className = 'msg error'
+                }
+            } catch {
+                msg.textContent = 'Erro de conexão.'
+                msg.className = 'msg error'
+            }
+        })
+
+        // Excluir
+        async function excluir(id, idOrc) {
+            if (!confirm('Deseja excluir este registro?')) return
+            const crud = cruds[crudAtual]
+            let url
+            if (crud.subrecurso) {
+                url = `${crud.endpoint}/${idOrc}/${crud.subrecurso}/${id}`
+            } else {
+                url = `${crud.endpoint}/${id}`
+            }
+            const res = await fetch(url, { method: 'DELETE' })
+            if (res.ok) {
+                carregar(document.getElementById('search').value)
+            } else {
+                alert('Erro ao excluir.')
+            }
+        }
+
+        // Autenticação — redireciona para login se não houver token (handled by shared-layout.js)
+        const token = localStorage.getItem('token')
+
+        // Exibe nome do usuário
+        const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
+
+        // Init: check openCrud from localStorage
+        const initCrud = localStorage.getItem('openCrud') || 'cartoes'
+        trocarCrud(initCrud)
+
+        // ═══ APAGAR DADOS ═══
+        function abrirConfirmacaoLimpeza() {
+            const overlay = document.getElementById('modal-limpeza')
+            overlay.classList.add('open')
+        }
+
+        function fecharModalLimpeza() {
+            document.getElementById('modal-limpeza').classList.remove('open')
+            document.getElementById('input-confirmar').value = ''
+            document.getElementById('btn-confirmar-limpeza').disabled = true
+        }
+
+        function verificarConfirmacao() {
+            const val = document.getElementById('input-confirmar').value.trim()
+            document.getElementById('btn-confirmar-limpeza').disabled = (val !== 'APAGAR')
+        }
+
+        async function executarLimpeza() {
+            const btn = document.getElementById('btn-confirmar-limpeza')
+            btn.disabled = true
+            btn.textContent = 'Apagando...'
+
+            try {
+                const res = await fetch('/admin/limpar-dados', {
+                    method: 'DELETE'
+                })
+
+                if (res.ok) {
+                    const data = await res.json()
+                    fecharModalLimpeza()
+                    document.getElementById('conteudo').innerHTML = `
+                        <div style="text-align:center;padding:48px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+                            <div style="font-size:3rem;margin-bottom:16px">✅</div>
+                            <h2 style="color:#16a34a;margin-bottom:12px">Dados apagados com sucesso!</h2>
+                            <p style="color:#64748B;font-size:.9rem;margin-bottom:20px">${data.message}</p>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px;margin:0 auto;text-align:left">
+                                <div style="padding:16px;background:#DCFCE7;border-radius:8px">
+                                    <div style="font-size:.75rem;font-weight:700;color:#16a34a;text-transform:uppercase;margin-bottom:8px">Mantidos</div>
+                                    ${data.mantidos.map(t => '<div style="font-size:.82rem;color:#166534;padding:2px 0">• ' + t + '</div>').join('')}
+                                </div>
+                                <div style="padding:16px;background:#FEE2E2;border-radius:8px">
+                                    <div style="font-size:.75rem;font-weight:700;color:#EF4444;text-transform:uppercase;margin-bottom:8px">Apagados</div>
+                                    ${data.apagados.map(t => '<div style="font-size:.82rem;color:#991B1B;padding:2px 0">• ' + t + '</div>').join('')}
+                                </div>
+                            </div>
+                        </div>`
+                } else {
+                    const err = await res.json().catch(() => null)
+                    alert('Erro: ' + (err?.message || 'Falha ao apagar dados.'))
+                    btn.textContent = '🗑 CONFIRMAR EXCLUSÃO'
+                    btn.disabled = false
+                }
+            } catch (e) {
+                alert('Erro de conexão: ' + e.message)
+                btn.textContent = '🗑 CONFIRMAR EXCLUSÃO'
+                btn.disabled = false
+            }
+        }
+    </script>
+
+    <!-- Modal de Confirmação de Limpeza -->
+    <div class="modal-overlay" id="modal-limpeza" onclick="if(event.target===this)fecharModalLimpeza()">
+        <div class="modal" style="max-width:500px">
+            <h2 style="color:#EF4444;display:flex;align-items:center;gap:10px">
+                <span style="font-size:1.5rem">⚠️</span> Apagar Dados de Negócio
+            </h2>
+            <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:16px;margin-bottom:16px">
+                <p style="font-size:.85rem;color:#991B1B;font-weight:600;margin-bottom:8px">Esta ação é irreversível!</p>
+                <p style="font-size:.82rem;color:#7F1D1D;line-height:1.5">
+                    Serão apagados: lançamentos, orçamentos, detalhes de orçamento, vencimentos de cartão,
+                    compras parceladas, parcelas, movimentações de conta, dívidas, parcelas de dívidas,
+                    metas, aportes de metas, programas de fidelidade e movimentações de fidelidade.
+                </p>
+            </div>
+            <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:16px;margin-bottom:20px">
+                <p style="font-size:.82rem;color:#166534;font-weight:600;margin-bottom:4px">Serão mantidos:</p>
+                <p style="font-size:.82rem;color:#166534">Usuários, Categorias, Subcategorias, Cartões de Crédito, Formas de Pagamento e Contas (com saldo resetado).</p>
+            </div>
+            <label style="display:block;font-size:.82rem;font-weight:600;color:#374151;margin-bottom:6px">
+                Digite <strong style="color:#EF4444">APAGAR</strong> para confirmar:
+            </label>
+            <input type="text" id="input-confirmar" oninput="verificarConfirmacao()"
+                style="width:100%;padding:12px;border:2px solid #FECACA;border-radius:8px;font-size:.95rem;margin-bottom:16px;outline:none;font-family:inherit"
+                placeholder="APAGAR" autocomplete="off">
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+                <button class="btn btn-secondary" onclick="fecharModalLimpeza()">Cancelar</button>
+                <button class="btn btn-danger" id="btn-confirmar-limpeza" onclick="executarLimpeza()" disabled>🗑 CONFIRMAR EXCLUSÃO</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

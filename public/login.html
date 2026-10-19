@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: sans-serif;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4f46e5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px 36px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo .icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .logo .icon svg {
+            width: 28px;
+            height: 28px;
+            fill: #fff;
+        }
+
+        .logo h1 {
+            font-size: 1.4rem;
+            color: #1e1b4b;
+            font-weight: 700;
+        }
+
+        .logo p {
+            font-size: 0.85rem;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        /* Tabs login / registro */
+        .tabs {
+            display: flex;
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 28px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: #1e1b4b;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Campos */
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #1e1b4b;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .field input:focus { border-color: #4f46e5; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-submit:hover { opacity: 0.9; }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .msg {
+            text-align: center;
+            font-size: 0.85rem;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 14px;
+        }
+
+        .msg.error   { background: #fee2e2; color: #dc2626; }
+        .msg.success { background: #dcfce7; color: #16a34a; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="logo">
+        <div class="icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </div>
+        <h1>FinanceApp</h1>
+        <p>Gerencie suas finanças com simplicidade</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" id="tab-login" onclick="trocarAba('login')">Entrar</button>
+        <button class="tab-btn" id="tab-registro" onclick="trocarAba('registro')">Criar conta</button>
+    </div>
+
+    <!-- Formulário Login -->
+    <form id="form-login">
+        <div class="field">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" placeholder="seu@email.com" required>
+        </div>
+        <div class="field">
+            <label for="login-senha">Senha</label>
+            <input type="password" id="login-senha" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-submit" id="btn-login">Entrar</button>
+        <p class="msg" id="msg-login" style="display:none"></p>
+    </form>
+
+    <!-- Formulário Registro -->
+    <form id="form-registro" style="display:none">
+        <div class="field">
+            <label for="reg-nome">Nome completo</label>
+            <input type="text" id="reg-nome" placeholder="Seu nome" required>
+        </div>
+        <div class="field">
+            <label for="reg-email">Email</label>
+            <input type="email" id="reg-email" placeholder="seu@email.com" required>
+        </div>
+        <div class="field">
+            <label for="reg-senha">Senha</label>
+            <input type="password" id="reg-senha" placeholder="Mínimo 6 caracteres" required minlength="6">
+        </div>
+        <div class="field">
+            <label for="reg-confirma">Confirmar senha</label>
+            <input type="password" id="reg-confirma" placeholder="Repita a senha" required>
+        </div>
+        <button type="submit" class="btn-submit" id="btn-registro">Criar conta</button>
+        <p class="msg" id="msg-registro" style="display:none"></p>
+    </form>
+</div>
+
+<script>
+    // Redireciona se já estiver logado
+    if (localStorage.getItem('token')) {
+        window.location.href = '/'
+    }
+
+    function trocarAba(aba) {
+        document.getElementById('tab-login').classList.toggle('active', aba === 'login')
+        document.getElementById('tab-registro').classList.toggle('active', aba === 'registro')
+        document.getElementById('form-login').style.display    = aba === 'login'    ? 'block' : 'none'
+        document.getElementById('form-registro').style.display = aba === 'registro' ? 'block' : 'none'
+    }
+
+    function mostrarMsg(id, texto, tipo) {
+        const el = document.getElementById(id)
+        el.textContent = texto
+        el.className = `msg ${tipo}`
+        el.style.display = 'block'
+    }
+
+    // Login
+    document.getElementById('form-login').addEventListener('submit', async e => {
+        e.preventDefault()
+        const btn = document.getElementById('btn-login')
+        btn.disabled = true
+        btn.textContent = 'Entrando...'
+
+        const email = document.getElementById('login-email').value
+        const senha = document.getElementById('login-senha').value
+
+        try {
+            const res = await fetch('/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
+            })
+            const data = await res.json()
+
+            if (res.ok) {
+                localStorage.setItem('token', data.token)
+                localStorage.setItem('usuario', JSON.stringify(data.usuario))
+                window.location.href = '/'
+            } else {
+                mostrarMsg('msg-login', data.message, 'error')
+                btn.disabled = false
+                btn.textContent = 'Entrar'
+            }
+        } catch {
+            mostrarMsg('msg-login', 'Erro de conexão.', 'error')
+            btn.disabled = false
+            btn.textContent = 'Entrar'
+        }
+    })
+
+    // Registro
+    document.getElementById('form-registro').addEventListener('submit', async e => {
+        e.preventDefault()
+        const btn = document.getElementById('btn-registro')
+
+        const nome    = document.getElementById('reg-nome').value
+        const email   = document.getElementById('reg-email').value
+        const senha   = document.getElementById('reg-senha').value
+        const confirma = document.getElementById('reg-confirma').value
+
+        if (senha !== confirma) {
+            mostrarMsg('msg-registro', 'As senhas não coincidem.', 'error')
+            return
+        }
+
+        btn.disabled = true
+        btn.textContent = 'Criando conta...'
+
+        try {
+            const res = await fetch('/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome, email, senha })
+            })
+            const data = await res.json()
+
+            if (res.ok) {
+                localStorage.setItem('token', data.token)
+                localStorage.setItem('usuario', JSON.stringify(data.usuario))
+                window.location.href = '/'
+            } else {
+                mostrarMsg('msg-registro', data.message, 'error')
+                btn.disabled = false
+                btn.textContent = 'Criar conta'
+            }
+        } catch {
+            mostrarMsg('msg-registro', 'Erro de conexão.', 'error')
+            btn.disabled = false
+            btn.textContent = 'Criar conta'
+        }
+    })
+</script>
+</body>
+</html>

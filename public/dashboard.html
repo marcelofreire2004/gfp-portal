@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Financeiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared-layout.css">
+<style>
+
+/* Hero - compact version */
+.hero-compact{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+
+/* KPIs */
+.kpi-section{max-width:1200px;margin:16px auto 0;padding:0;position:relative;z-index:10}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.kpi-card{background:var(--surface);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;transition:all .2s;border:1px solid var(--border-light)}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.kpi-icon{width:42px;height:42px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.kpi-icon svg{width:20px;height:20px}
+.kpi-icon.rec{background:var(--success-light);color:var(--success)}.kpi-icon.desp{background:var(--danger-light);color:var(--danger)}.kpi-icon.inv{background:var(--purple-light);color:var(--purple)}.kpi-icon.saldo{background:var(--primary-light);color:var(--primary)}.kpi-icon.pend{background:var(--warning-light);color:var(--warning)}
+.kpi-info{min-width:0}.kpi-label{font-size:.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:3px}.kpi-valor{font-size:1.05rem;font-weight:800;line-height:1.2}.kpi-sub{font-size:.65rem;color:var(--text-muted);margin-top:2px}
+
+/* Layout */
+.main{max-width:1200px;margin:0 auto;padding:20px 0;display:flex;flex-direction:column;gap:16px}
+.row{display:grid;gap:16px}.row-2{grid-template-columns:3fr 2fr}.row-eq{grid-template-columns:1fr 1fr}.row-full{grid-template-columns:1fr}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.row-2,.row-eq{grid-template-columns:1fr}.main{padding:16px 0}.kpi-section{padding:0}}
+
+/* Panel */
+.panel{background:var(--surface);border-radius:var(--radius-lg);padding:22px;box-shadow:var(--shadow-xs);border:1px solid var(--border-light);transition:box-shadow .2s}
+.panel:hover{box-shadow:var(--shadow-sm)}
+.panel-title{font-size:.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.panel-title svg{width:16px;height:16px;opacity:.7}
+
+/* Evolução */
+.evol-legend{display:flex;gap:12px;margin-bottom:10px;font-size:.7rem;font-weight:600}
+.evol-legend span{display:flex;align-items:center;gap:4px}
+.evol-dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.evol-bars{display:flex;align-items:flex-end;gap:4px;height:130px}
+.evol-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px}
+.evol-col-bars{display:flex;align-items:flex-end;gap:1px;height:110px;width:100%}
+.evol-bar{flex:1;border-radius:3px 3px 0 0;transition:height .4s}
+.evol-lbl{font-size:.58rem;color:var(--text-muted);margin-top:4px}
+
+/* Resumo */
+.resumo-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);font-size:.85rem}
+.resumo-row:last-child{border:none;font-weight:700;padding-top:12px;border-top:2px solid var(--border)}
+.resumo-row .lbl{color:var(--text-secondary)}.resumo-row .val{font-weight:700}
+
+/* Categorias - barras */
+.cat-bar-item{margin-bottom:14px}
+.cat-bar-header{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:5px}
+.cat-bar-nome{font-weight:600;color:var(--text)}.cat-bar-val{font-weight:700;color:var(--danger)}
+.cat-bar-track{background:var(--border-light);border-radius:99px;height:8px;overflow:hidden}
+.cat-bar-fill{height:100%;border-radius:99px;transition:width .5s}
+.cat-bar-pct{font-size:.68rem;color:var(--text-muted);margin-top:3px}
+
+/* Formas */
+.forma-item{margin-bottom:14px}
+.forma-header{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:5px}
+.forma-nome{font-weight:600;color:var(--text)}.forma-val{font-weight:700;color:var(--danger)}
+.forma-bar{background:var(--border-light);border-radius:99px;height:6px;overflow:hidden}
+.forma-fill{height:100%;border-radius:99px;background:var(--primary-gradient);transition:width .5s}
+.forma-pct{font-size:.68rem;color:var(--text-muted);margin-top:3px}
+
+/* Metas */
+.meta-item{margin-bottom:16px}
+.meta-header{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:5px}
+.meta-name{font-weight:600;color:var(--text)}.meta-pct{font-weight:700;color:var(--primary)}
+.meta-bar{background:var(--border-light);border-radius:99px;height:8px;overflow:hidden}
+.meta-fill{height:100%;border-radius:99px;background:var(--primary-gradient);transition:width .5s}
+.meta-sub{font-size:.7rem;color:var(--text-muted);margin-top:4px}
+
+/* Insights */
+.insight-item{display:flex;gap:10px;padding:12px 16px;background:var(--surface-hover);border-radius:var(--radius);margin-bottom:8px;font-size:.82rem;color:var(--text);align-items:flex-start;transition:all .2s}
+.insight-item:hover{background:var(--primary-light);transform:translateX(4px)}
+.insight-icon{font-size:1rem;flex-shrink:0}
+
+/* Lançamentos */
+.lanc-card{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface-hover);border-radius:var(--radius);margin-bottom:8px;transition:all .2s}
+.lanc-card:hover{background:var(--primary-light);transform:translateY(-2px)}
+.lanc-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.lanc-icon.l-rec{background:var(--success-light)}.lanc-icon.l-desp{background:var(--danger-light)}.lanc-icon.l-inv{background:var(--purple-light)}
+.lanc-info{flex:1;min-width:0}
+.lanc-desc{font-size:.82rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lanc-meta{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+.lanc-right{text-align:right;flex-shrink:0}
+.lanc-val{font-size:.85rem;font-weight:700}
+.lanc-badge{font-size:.6rem;padding:2px 8px;border-radius:99px;font-weight:600;display:inline-block;margin-top:3px}
+
+/* Cartão */
+.cartao-card{background:var(--surface-hover);border-radius:var(--radius);padding:14px 16px;border-left:4px solid var(--primary);margin-bottom:10px;transition:all .2s}
+.cartao-card:hover{box-shadow:var(--shadow-sm);transform:translateX(2px)}
+.cartao-link{font-size:.72rem;color:var(--primary);font-weight:700;cursor:pointer;margin-top:6px;display:inline-block;text-decoration:none;transition:opacity .2s}
+.cartao-link:hover{opacity:.7}
+
+/* Dívidas */
+.divida-item{padding:12px 0;border-bottom:1px solid var(--border-light)}
+.divida-item:last-child{border:none}
+.divida-header{display:flex;justify-content:space-between;margin-bottom:4px}
+.divida-nome{font-size:.85rem;font-weight:600;color:var(--text)}.divida-valor{font-size:.85rem;font-weight:700;color:var(--danger)}
+.divida-bar{background:var(--border-light);border-radius:99px;height:6px;overflow:hidden;margin-top:6px}
+.divida-fill{height:100%;border-radius:99px;background:var(--primary-gradient)}
+.divida-sub{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-muted);margin-top:4px}
+
+/* Parceladas */
+.parc-card{background:var(--surface-hover);border-radius:var(--radius);padding:14px;border-left:3px solid var(--warning);margin-bottom:10px}
+.parc-nome{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:3px}
+.parc-meta{font-size:.7rem;color:var(--text-muted);margin-bottom:6px}
+.parc-bar{background:var(--border-light);border-radius:99px;height:6px;overflow:hidden;margin-bottom:4px}
+.parc-fill{height:100%;border-radius:99px;background:var(--warning)}
+.parc-info{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted)}
+
+/* Fidelidade */
+.fid-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light)}
+.fid-item:last-child{border:none}
+.fid-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;background:var(--purple-light)}
+.fid-info{flex:1}.fid-nome{font-size:.82rem;font-weight:600;color:var(--text)}.fid-tipo{font-size:.68rem;color:var(--text-muted);text-transform:uppercase}
+.fid-saldo{text-align:right}.fid-val{font-size:.88rem;font-weight:700;color:var(--primary)}.fid-brl{font-size:.7rem;color:var(--text-muted)}
+
+.empty{text-align:center;padding:24px 16px;color:var(--text-muted);font-size:.82rem}
+
+/* Mentor cards */
+.mentor-score{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.mentor-score-circle{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;flex-shrink:0}
+.mentor-score-info{flex:1}
+.mentor-score-label{font-size:.88rem;font-weight:700;color:var(--text)}
+.mentor-score-desc{font-size:.72rem;color:var(--text-muted);margin-top:2px}
+.mentor-bar{background:var(--border-light);border-radius:99px;height:8px;overflow:hidden;margin-top:8px}
+.mentor-bar-fill{height:100%;border-radius:99px;transition:width .6s}
+.mentor-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:var(--surface-hover);border-radius:var(--radius-sm);margin-bottom:8px;font-size:.8rem;transition:all .2s}
+.mentor-item:hover{background:var(--primary-light);transform:translateX(3px)}
+.mentor-item-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+.mentor-item-text{color:var(--text);line-height:1.4}
+.mentor-item-text strong{font-weight:700}
+.mentor-meta-prog{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light);font-size:.82rem}
+.mentor-meta-prog:last-child{border:none}
+.mentor-meta-pct{font-size:.85rem;font-weight:800;min-width:40px}
+.empty-icon{font-size:1.5rem;margin-bottom:8px}
+.empty-text{font-weight:600;color:var(--text);margin-bottom:4px}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-xl);width:92%;max-width:580px;max-height:80vh;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border-light)}
+.modal-head h3{font-size:1rem;font-weight:800}
+.modal-x{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);padding:4px 8px;border-radius:var(--radius-sm)}
+.modal-x:hover{background:var(--surface-hover)}
+.modal-body{padding:16px 24px;overflow-y:auto;flex:1}
+.modal-foot{padding:14px 24px;border-top:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center}
+.modal-foot .lbl{color:var(--text-secondary);font-size:.82rem;font-weight:600}
+.modal-foot .val{font-weight:900;color:var(--danger);font-size:1.1rem}
+.m-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-light)}.m-item:last-child{border:none}
+</style>
+</head>
+<body>
+<script src="/shared-layout.js"></script>
+
+<!-- Modal Fatura -->
+<div class="modal-bg" id="modal-bg" onclick="fecharModal(event)" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+<div class="modal"><div class="modal-head"><h3 id="modal-titulo">Fatura</h3><button class="modal-x" onclick="fecharModal()">&times;</button></div><div class="modal-body" id="modal-body"></div><div class="modal-foot"><span class="lbl">Total</span><span class="val" id="modal-total"></span></div></div>
+</div>
+
+<!-- Hero -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+<div>
+<div id="hero-month" style="font-size:1.3rem;font-weight:900;color:var(--text)"></div>
+<div id="hero-greeting" style="font-size:.82rem;color:var(--text-muted);margin-top:2px"></div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<select class="topbar-sel" id="sel-mes" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:.78rem;font-weight:600;color:var(--text);background:var(--surface);cursor:pointer;outline:none;font-family:inherit"><option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
+<select class="topbar-sel" id="sel-ano" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:.78rem;font-weight:600;color:var(--text);background:var(--surface);cursor:pointer;outline:none;font-family:inherit"></select>
+<div style="display:flex;gap:8px;align-items:center;padding:8px 14px;background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius-sm)">
+<span style="font-size:.7rem;color:var(--text-muted)">Saldo</span>
+<span id="hero-saldo" style="font-size:1rem;font-weight:800">R$ 0</span>
+</div>
+<div style="display:flex;gap:8px;align-items:center;padding:8px 14px;background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius-sm)">
+<span style="font-size:.7rem;color:var(--text-muted)">Saúde</span>
+<span id="hero-score" style="font-size:1rem;font-weight:800">--</span>
+</div>
+</div>
+</div>
+<div id="hero-ctx" style="font-size:.75rem;font-weight:600;margin-bottom:4px;color:var(--text-secondary)"></div>
+<div id="hero-next-action" style="font-size:.75rem;color:var(--text-secondary);background:var(--surface-hover);padding:8px 14px;border-radius:var(--radius-sm);display:inline-block;margin-bottom:20px"></div>
+
+<!-- KPIs - GPS Row 1 -->
+<div class="main">
+<div class="row row-eq" style="margin-bottom:16px">
+<!-- ISFF -->
+<div class="panel" style="border-left:4px solid var(--primary)">
+<div class="panel-title">🩺 ISFF — Índice de Saúde Financeira</div>
+<div id="card-isff"></div>
+</div>
+<!-- ONDE ESTOU -->
+<div class="panel" style="border-left:4px solid var(--info)">
+<div class="panel-title">📍 Onde Estou?</div>
+<div id="card-onde-estou"></div>
+</div>
+<!-- PARA ONDE VOU -->
+<div class="panel" style="border-left:4px solid var(--purple)">
+<div class="panel-title">🧭 Para Onde Estou Indo?</div>
+<div id="card-para-onde"></div>
+</div>
+<!-- PONTO DE ATENÇÃO -->
+<div class="panel" style="border-left:4px solid var(--danger)">
+<div class="panel-title">⚠ Ponto de Atenção</div>
+<div id="card-atencao"></div>
+</div>
+</div>
+
+<!-- GPS Row 2 -->
+<div class="row row-eq" style="margin-bottom:16px">
+<!-- CAPACIDADE DE INVESTIMENTO -->
+<div class="panel">
+<div class="panel-title">📈 Capacidade de Investimento</div>
+<div id="card-investimento"></div>
+</div>
+<!-- RESUMO DOS CARTÕES -->
+<div class="panel">
+<div class="panel-title">💳 Resumo dos Cartões</div>
+<div id="card-cartoes-resumo"></div>
+</div>
+<!-- O QUE DEVO FAZER AGORA -->
+<div class="panel" style="border-left:4px solid var(--warning)">
+<div class="panel-title">🎯 O Que Devo Fazer Agora?</div>
+<div id="card-acao"></div>
+</div>
+<!-- FATURA DOS CARTÕES -->
+<div class="panel">
+<div class="panel-title">💳 Fatura dos Cartões</div>
+<div id="card-faturas"></div>
+</div>
+</div>
+
+<!-- GPS Row 3 -->
+<div class="row row-eq" style="margin-bottom:16px">
+<!-- CALENDÁRIO FINANCEIRO -->
+<div class="panel">
+<div class="panel-title">📅 Calendário Financeiro</div>
+<div id="card-calendario"></div>
+</div>
+<!-- METAS -->
+<div class="panel">
+<div class="panel-title">🎯 Metas</div>
+<div id="card-metas"></div>
+</div>
+<!-- EVOLUÇÃO PATRIMONIAL -->
+<div class="panel">
+<div class="panel-title">📊 Evolução Patrimonial</div>
+<div id="card-evolucao"></div>
+</div>
+<!-- MILHAS x REALIDADE -->
+<div class="panel">
+<div class="panel-title">✈ Milhas × Realidade</div>
+<div id="card-milhas"></div>
+</div>
+</div>
+
+<!-- Últimos Lançamentos -->
+<div class="row row-full"><div class="panel"><div class="panel-title">📋 Últimos Lançamentos <a href="/lancamentos-page" style="margin-left:auto;font-size:.7rem;color:var(--primary);text-decoration:none;font-weight:600">Ver todos →</a></div><div id="lanc-wrap"></div></div></div>
+</div>
+
+<!-- Modal Fatura -->
+<div class="modal-bg" id="modal-bg" onclick="fecharModal(event)" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+<div class="modal"><div class="modal-head"><h3 id="modal-titulo">Fatura</h3><button class="modal-x" onclick="fecharModal()">&times;</button></div><div class="modal-body" id="modal-body"></div><div class="modal-foot"><span class="lbl">Total</span><span class="val" id="modal-total"></span></div></div>
+</div>
+
+<script>
+(function(){
+const MF=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const MS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+const CORES=['#EF4444','#F97316','#F59E0B','#3B82F6','#8B5CF6','#EC4899','#14B8A6']
+const moeda=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
+const fmtData=d=>d?new Date(d).toLocaleDateString('pt-BR'):'—'
+const pctVar=(a,b)=>(!b||b===0)?null:((a-b)/Math.abs(b)*100).toFixed(1)
+
+const anoAtual=new Date().getFullYear()
+const selAno=document.getElementById('sel-ano')
+for(let a=anoAtual+1;a>=anoAtual-3;a--){const o=document.createElement('option');o.value=a;o.textContent=a;if(a===anoAtual)o.selected=true;selAno.appendChild(o)}
+document.getElementById('sel-mes').value=new Date().getMonth()+1
+
+// User
+const hora=new Date().getHours(),saudacao=hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite'
+const usr=JSON.parse(localStorage.getItem('usuario')||'{}'),nome=usr.nome||'Usuário'
+document.getElementById('hero-greeting').textContent=`${saudacao}, ${nome} 👋`
+
+const selMes=document.getElementById('sel-mes'),selAnoEl=document.getElementById('sel-ano')
+selMes.onchange=selAnoEl.onchange=recarregar
+
+async function recarregar(){
+const ano=selAnoEl.value,mes=selMes.value
+const res=await fetch(`/dashboard?ano=${ano}&mes=${mes}`)
+const d=await res.json()
+document.getElementById('hero-month').textContent=`${MF[mes-1]} ${ano}`
+renderGPS(d,Number(ano),Number(mes))
+}
+
+function getVal(arr,t,c){return Number((arr||[]).find(r=>r.tipo===t)?.[c]||0)}
+
+function renderGPS(d,ano,mes){
+const rec=getVal(d.resumoMes,'receita','pago'),desp=getVal(d.resumoMes,'despesa','pago'),inv=getVal(d.resumoMes,'investimento','pago')
+const saldo=rec-desp
+const pend=Number(d.pendentes?.total||0),pendQ=Number(d.pendentes?.qtd||0)
+const divTotal=Number(d.dividasTotais?.total_restante||0)
+const metasArr=d.metas||[]
+const recAnt=getVal(d.mesAnterior,'receita','pago'),despAnt=getVal(d.mesAnterior,'despesa','pago')
+const temDados=rec>0||desp>0||inv>0||pendQ>0
+
+// ═══ ISFF - Índice de Saúde Financeira ═══
+let score=temDados?50:0
+if(rec>0)score+=Math.min(20,Math.round((saldo/rec)*40))
+if(rec>0&&inv>0)score+=Math.min(15,Math.round(inv/rec*50))
+if(temDados&&pendQ===0)score+=10
+if(temDados&&divTotal===0)score+=5
+score=Math.max(0,Math.min(100,score))
+const scoreCor=!temDados?'var(--text-muted)':score>=75?'var(--success)':score>=50?'var(--warning)':'var(--danger)'
+const scoreLabel=!temDados?'Sem dados':score>=75?'SAUDÁVEL':score>=50?'ATENÇÃO':'CRÍTICO'
+const scoreVar=despAnt>0?Math.round(((rec-desp)-(recAnt-despAnt))/Math.max(Math.abs(recAnt-despAnt),1)*10):0
+
+document.getElementById('hero-saldo').textContent=moeda(saldo)
+document.getElementById('hero-saldo').style.color=saldo>=0?'var(--success)':'var(--danger)'
+document.getElementById('hero-score').textContent=temDados?`${score}`:' --'
+document.getElementById('hero-score').style.color=scoreCor
+document.getElementById('hero-ctx').innerHTML=temDados?(saldo>=0?'<span style="color:var(--success)">▲ Superávit no mês</span>':'<span style="color:var(--danger)">▼ Déficit no mês</span>'):''
+document.getElementById('hero-next-action').innerHTML=!temDados?'📊 Cadastre lançamentos para ver sua saúde financeira':pendQ>0?`⚡ Regularize ${pendQ} pendência(s) para melhorar o ISFF`:rec>0&&inv<rec*0.2?'📈 Aumente investimentos para 20% da renda':'✅ Continue monitorando'
+
+document.getElementById('card-isff').innerHTML=temDados?`
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+<div style="font-size:2.2rem;font-weight:900;color:${scoreCor}">${score}</div>
+<div><div style="font-size:.82rem;font-weight:800;color:${scoreCor}">${scoreLabel}</div>
+<div style="font-size:.7rem;color:var(--text-muted)">${scoreVar>0?'↑ +'+scoreVar+' pontos últimos 30 dias':scoreVar<0?'↓ '+scoreVar+' pontos últimos 30 dias':'— estável'}</div></div>
+</div>
+<div style="font-size:.72rem;color:var(--text-secondary);line-height:1.5"><strong>ISFF</strong> = Índice geral de saúde financeira.<br>Composição: receita vs despesa, investimentos, pendências e dívidas.</div>`
+:'<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Registre lançamentos para calcular o ISFF.</div>'
+
+// ═══ ONDE ESTOU ═══
+const liquido=saldo-divTotal
+const caixaLivre=Math.max(0,saldo-pend)
+document.getElementById('card-onde-estou').innerHTML=temDados?`
+<div style="font-size:.8rem;line-height:2">
+<div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Patrimônio:</span><strong>${moeda(rec)}</strong></div>
+<div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Dívidas:</span><strong style="color:var(--danger)">${moeda(divTotal)}</strong></div>
+<div style="display:flex;justify-content:space-between;border-top:1px solid var(--border-light);padding-top:6px;margin-top:4px"><span style="color:var(--text-secondary)">Líquido:</span><strong style="color:${liquido>=0?'var(--success)':'var(--danger)'}">${moeda(liquido)}</strong></div>
+<div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Caixa Livre:</span><strong style="color:var(--primary)">${moeda(caixaLivre)}</strong></div>
+</div>
+<div style="font-size:.68rem;color:var(--text-muted);margin-top:8px"><strong>Significado:</strong> Patrimônio = Ativos − Passivos</div>`
+:'<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Sem dados suficientes.</div>'
+
+// ═══ PARA ONDE VOU ═══
+const dias=new Date(ano,mes,0).getDate(),diaAtual=new Date().getDate()
+const ritmo=diaAtual>0?desp/diaAtual:0
+const proj12=saldo*12,proj24=saldo*24+inv*24,proj60=saldo*60+inv*60*2
+document.getElementById('card-para-onde').innerHTML=temDados?`
+<div style="font-size:.8rem;line-height:2">
+<div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">12 meses →</span><strong style="color:${proj12>=0?'var(--success)':'var(--danger)'}">${moeda(proj12)}</strong></div>
+<div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">24 meses →</span><strong style="color:${proj24>=0?'var(--success)':'var(--danger)'}">${moeda(proj24)}</strong></div>
+<div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">60 meses →</span><strong style="color:${proj60>=0?'var(--success)':'var(--danger)'}">${moeda(proj60)}</strong></div>
+</div>
+<div style="font-size:.68rem;color:var(--text-muted);margin-top:8px">Projeção mantendo o ritmo atual de receitas, despesas e investimentos.</div>`
+:'<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Sem dados para projetar.</div>'
+
+// ═══ PONTO DE ATENÇÃO ═══
+const comprometimento=rec>0?Math.round((desp+pend)/(rec*3)*100):0
+const risco=comprometimento>80?'Alto':comprometimento>50?'Moderado':'Baixo'
+const riscoCor=comprometimento>80?'var(--danger)':comprometimento>50?'var(--warning)':'var(--success)'
+// Projetar déficit
+const evolArr=d.evolucao||[]
+let mesDeficit=null
+for(let i=Number(mes);i<=12;i++){const e=evolArr.find(x=>Number(x.mes)===i);const r=Number(e?.receita||rec/12);const dp=Number(e?.despesa||desp);if(r-dp<0&&!mesDeficit)mesDeficit=MF[i-1]}
+document.getElementById('card-atencao').innerHTML=temDados?`
+<div style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;background:${riscoCor}20;color:${riscoCor};margin-bottom:8px">Risco: ${risco}</div>
+<div style="font-size:.8rem;line-height:1.8">
+<div>Comprometimento futuro: <strong>${comprometimento}%</strong></div>
+${mesDeficit?`<div style="color:var(--danger)">Próximo alerta: Déficit previsto em <strong>${mesDeficit}</strong></div>`:'<div style="color:var(--success)">Sem déficit previsto nos próximos meses</div>'}
+</div>
+<div style="font-size:.68rem;color:var(--text-muted);margin-top:8px"><strong>Significado:</strong> Quanto da renda dos próximos meses já está comprometida.</div>`
+:'<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Sem dados para análise de risco.</div>'
+
+// ═══ CAPACIDADE DE INVESTIMENTO ═══
+const metaInv=rec*0.2
+const progInv=metaInv>0?Math.min(100,Math.round(inv/metaInv*100)):0
+document.getElementById('card-investimento').innerHTML=temDados?`
+<div style="font-size:1.1rem;font-weight:900;color:var(--purple);margin-bottom:4px">${moeda(inv)}/mês</div>
+<div style="font-size:.78rem;color:var(--text-secondary)">Meta: ${moeda(metaInv)}/mês</div>
+<div style="background:var(--border-light);border-radius:99px;height:6px;overflow:hidden;margin:8px 0"><div style="height:100%;width:${progInv}%;background:var(--purple);border-radius:99px"></div></div>
+<div style="font-size:.72rem;color:var(--text-muted)">Progresso: ${progInv}%</div>`
+:'<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Sem dados.</div>'
+
+// ═══ RESUMO CARTÕES ═══
+const cartoes=d.gastosCartao||[]
+const totalFaturas=cartoes.reduce((s,c)=>s+Number(c.total||0),0)
+const totalParceladas=Number(d.parceladasTotais?.total_pendente||0)
+const utilizacao=rec>0?Math.round(totalFaturas/rec*100):0
+const statusCartao=utilizacao>60?'ATENÇÃO':utilizacao>30?'MODERADO':'BOM'
+const statusCor=utilizacao>60?'var(--danger)':utilizacao>30?'var(--warning)':'var(--success)'
+document.getElementById('card-cartoes-resumo').innerHTML=`
+<div style="font-size:.8rem;line-height:1.8">
+<div>• Utilização: <strong>${utilizacao}%</strong></div>
+<div>• Parcelamentos: <strong>${moeda(totalParceladas)}</strong></div>
+<div>• Faturas futuras: <strong>${moeda(totalFaturas)}</strong></div>
+<div>• Status: <strong style="color:${statusCor}">${statusCartao}</strong></div>
+</div>`
+
+// ═══ O QUE DEVO FAZER AGORA ═══
+let acaoTxt='',acaoImpacto=''
+if(pendQ>0){acaoTxt=`Regularize ${pendQ} pendência(s)`;acaoImpacto=`Ganho estimado: +${Math.min(15,pendQ*2)} pontos no ISFF`}
+else if(rec>0&&inv<rec*0.15){acaoTxt='Aumente seus investimentos';acaoImpacto=`Ganho estimado: +8 pontos no ISFF`}
+else if(divTotal>0){acaoTxt='Antecipe pagamento de dívida';acaoImpacto='Economia com juros + melhora no ISFF'}
+else{acaoTxt='Continue monitorando';acaoImpacto='Manter disciplina financeira'}
+document.getElementById('card-acao').innerHTML=`
+<div style="font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:6px">${acaoTxt}</div>
+<div style="font-size:.75rem;color:var(--text-secondary);line-height:1.5">${acaoImpacto}</div>`
+
+// ═══ FATURA DOS CARTÕES ═══
+const vencs=d.vencimentosCartao||[]
+if(!cartoes.length&&!vencs.length){
+document.getElementById('card-faturas').innerHTML='<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Nenhuma fatura em aberto. ✅</div>'
+}else{
+document.getElementById('card-faturas').innerHTML=cartoes.map(c=>{
+const comprPct=rec>0?Math.round(Number(c.total)/rec*100):0
+return`<div style="padding:6px 0;border-bottom:1px solid var(--border-light);font-size:.78rem;line-height:1.6">
+<div style="font-weight:700;color:var(--text)">• ${c.cartao}</div>
+<div style="padding-left:12px;color:var(--text-secondary)">Fatura Atual: <strong style="color:var(--danger)">${moeda(c.total)}</strong></div>
+<div style="padding-left:12px;color:var(--text-secondary)">Comprometimento: ${comprPct}%</div>
+</div>`}).join('')}
+
+// ═══ CALENDÁRIO FINANCEIRO ═══
+const evolucao=d.evolucao||[]
+let calHtml=''
+for(let i=Number(mes);i<=Math.min(Number(mes)+5,12);i++){
+const e=evolucao.find(x=>Number(x.mes)===i)
+const r=Number(e?.receita||0),dp=Number(e?.despesa||0)
+const s=r-dp
+const icon=s>0?'✅':s<0?'⚠':'➖'
+const cor=s>=0?'var(--success)':'var(--danger)'
+calHtml+=`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.78rem;cursor:pointer" onclick="location.href='/lancamentos-page'" title="Clique para ver detalhes"><span>${icon} ${MS[i-1]}</span><strong style="color:${cor}">${s!==0?(s>0?'+':'')+moeda(s):'—'}</strong></div>`
+}
+document.getElementById('card-calendario').innerHTML=calHtml||'<div style="color:var(--text-muted);font-size:.78rem">Sem projeção disponível.</div>'
+
+// ═══ METAS ═══
+if(!metasArr.length){
+document.getElementById('card-metas').innerHTML='<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Nenhuma meta cadastrada.<br><a href="/metas-page" style="color:var(--primary);font-weight:600;font-size:.75rem">+ Criar meta</a></div>'
+}else{
+document.getElementById('card-metas').innerHTML=metasArr.slice(0,3).map(m=>{
+const pct=Number(m.percentual||0)
+const cor=pct>=80?'var(--success)':pct>=40?'var(--primary)':'var(--warning)'
+return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:4px"><span style="font-weight:600;color:var(--text)">${m.descricao}</span><span style="font-weight:800;color:${cor}">${pct}%</span></div><div style="background:var(--border-light);border-radius:99px;height:5px;overflow:hidden"><div style="height:100%;width:${Math.min(100,pct)}%;background:${cor};border-radius:99px"></div></div></div>`
+}).join('')}
+
+// ═══ EVOLUÇÃO PATRIMONIAL ═══
+const saldoHoje=saldo-divTotal
+const tendencia=saldo>0?'↗ Melhorando':'↘ Piorando'
+const tendCor=saldo>0?'var(--success)':'var(--danger)'
+const variacao30=saldo-(recAnt-despAnt)
+document.getElementById('card-evolucao').innerHTML=temDados?`
+<div style="font-size:.8rem;line-height:1.8">
+<div>Hoje: <strong style="color:${saldoHoje>=0?'var(--success)':'var(--danger)'}">${moeda(saldoHoje)}</strong></div>
+<div>Tendência: <strong style="color:${tendCor}">${tendencia}</strong></div>
+<div>Variação (30 dias): <strong>${moeda(variacao30)}</strong></div>
+</div>
+<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border-light);font-size:.72rem;color:var(--text-muted)">Meta: Patrimônio Zero<br>Progresso: ${divTotal>0?Math.max(0,Math.round((1-divTotal/(divTotal+Math.max(saldo,0)))*100)):100}%</div>`
+:'<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Sem dados.</div>'
+
+// ═══ MILHAS x REALIDADE ═══
+const fidelidade=d.fidelidade||[]
+if(!fidelidade.length){
+document.getElementById('card-milhas').innerHTML='<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:.82rem">Nenhum programa cadastrado.<br><a href="/programas-page" style="color:var(--primary);font-weight:600;font-size:.75rem">+ Cadastrar</a></div>'
+}else{
+const totalPontos=fidelidade.reduce((s,p)=>s+Number(p.saldo_atual||0),0)
+const valorEstimado=fidelidade.reduce((s,p)=>s+Number(p.saldo_atual||0)*Number(p.valor_por_ponto||0),0)
+const impactoParc=totalParceladas
+const resultado=valorEstimado-impactoParc
+document.getElementById('card-milhas').innerHTML=`
+<div style="font-size:.78rem;line-height:1.8">
+<div>• Milhas acumuladas: <strong>${totalPontos.toLocaleString('pt-BR')}</strong></div>
+<div>• Valor estimado: <strong style="color:var(--success)">${moeda(valorEstimado)}</strong></div>
+<div>• Impacto dos parcelamentos: <strong style="color:var(--danger)">${moeda(-impactoParc)}</strong></div>
+<div>• Resultado líquido: <strong style="color:${resultado>=0?'var(--success)':'var(--danger)'}">${moeda(resultado)}</strong></div>
+</div>`}
+
+// ═══ ÚLTIMOS LANÇAMENTOS ═══
+renderLancamentos(d.ultimos)
+}
+
+function renderLancamentos(ultimos){
+const el=document.getElementById('lanc-wrap')
+if(!ultimos||!ultimos.length){el.innerHTML='<div class="empty">Nenhum lançamento</div>';return}
+const catIcon=c=>{const l=(c||'').toLowerCase();if(l.includes('aliment')||l.includes('mercado'))return'🛒';if(l.includes('transporte')||l.includes('combust'))return'⛽';if(l.includes('moradia'))return'🏠';if(l.includes('assinatura'))return'📱';if(l.includes('receita'))return'💰';if(l.includes('investiment'))return'📈';return'💸'}
+const tipo=c=>{const u=(c||'').toUpperCase();return u==='RECEITA'||u==='RECEITAS'?'receita':u==='INVESTIMENTOS'||u==='INVESTIMENTO'?'investimento':'despesa'}
+el.innerHTML=ultimos.slice(0,8).map(l=>{const t=tipo(l.categoria),vcls=t==='receita'?'color:var(--success)':t==='investimento'?'color:var(--purple)':'color:var(--danger)'
+return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light)"><span style="font-size:1rem">${catIcon(l.categoria)}</span><div style="flex:1;min-width:0"><div style="font-size:.82rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.subcategoria}</div><div style="font-size:.68rem;color:var(--text-muted)">${l.categoria} · ${fmtData(l.data_lancamento)}</div></div><div style="text-align:right"><div style="font-size:.85rem;font-weight:700;${vcls}">${t==='receita'?'+':'-'} ${moeda(l.valor)}</div></div></div>`}).join('')}
+
+async function abrirModal(idVenc,nome){const bg=document.getElementById('modal-bg'),body=document.getElementById('modal-body'),tit=document.getElementById('modal-titulo'),tot=document.getElementById('modal-total');tit.textContent=`Fatura — ${nome}`;body.innerHTML='<div class="empty">Carregando...</div>';tot.textContent='';bg.classList.add('open');try{const r=await fetch(`/lancamentos/por-vencimento/${idVenc}`);const ls=await r.json();if(!ls.length){body.innerHTML='<div class="empty">Nenhum lançamento</div>';tot.textContent=moeda(0);return}const t=ls.reduce((s,l)=>s+Number(l.valor||0),0);body.innerHTML=ls.map(l=>`<div class="m-item"><div><span style="font-size:.85rem;font-weight:600;color:var(--text)">${l.nome_subcategoria||'—'}</span><span style="font-size:.7rem;color:var(--text-muted);margin-left:8px">${fmtData(l.data_lancamento)}</span></div><span style="font-weight:700;color:var(--danger)">${moeda(l.valor)}</span></div>`).join('');tot.textContent=moeda(t)}catch(e){body.innerHTML='<div class="empty" style="color:var(--danger)">Erro</div>'}}
+function fecharModal(ev){if(ev&&ev.target!==ev.currentTarget)return;document.getElementById('modal-bg').classList.remove('open')}
+
+window.recarregar=recarregar;window.abrirModal=abrirModal;window.fecharModal=fecharModal
+recarregar()
+})()
+</script>
+</body>
+</html>

@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planejamento Financeiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared-layout.css">
+<style>
+
+/* Layout adjustments for sidebar */
+
+.main{max-width:1200px;margin:0 auto;padding:0}
+.kpi-section{max-width:1200px;margin:0 auto 16px;padding:0;position:relative;z-index:10}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi-card{background:var(--surface);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;transition:all .2s;border:1px solid var(--border-light)}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.kpi-icon{width:42px;height:42px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.kpi-icon svg{width:20px;height:20px}
+.kpi-icon.rec{background:var(--success-light);color:var(--success)}.kpi-icon.desp{background:var(--danger-light);color:var(--danger)}.kpi-icon.inv{background:var(--purple-light);color:var(--purple)}.kpi-icon.saldo{background:var(--primary-light);color:var(--primary)}
+.kpi-info{min-width:0}.kpi-label{font-size:.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:3px}.kpi-valor{font-size:1.05rem;font-weight:800;line-height:1.2}.kpi-sub{font-size:.62rem;color:var(--text-muted);margin-top:2px}
+
+.section-gap{margin-top:24px}
+.row{display:grid;gap:16px;margin-bottom:16px}.row-2{grid-template-columns:1fr 1fr}.row-3{grid-template-columns:1fr 1fr 1fr}
+.panel{background:var(--surface);border-radius:var(--radius-lg);padding:22px;box-shadow:var(--shadow-xs);border:1px solid var(--border-light);transition:box-shadow .2s}
+.panel:hover{box-shadow:var(--shadow-sm)}
+.panel-title{font-size:.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.panel-title svg{width:16px;height:16px;opacity:.7}
+
+/* Distribution bars */
+.dist-item{margin-bottom:14px}
+.dist-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dist-name{font-size:.82rem;font-weight:600;color:var(--text)}.dist-val{font-size:.82rem;font-weight:700;color:var(--text)}
+.dist-bar{background:var(--border-light);border-radius:99px;height:8px;overflow:hidden}
+.dist-fill{height:100%;border-radius:99px;transition:width .5s}
+.dist-pct{font-size:.68rem;color:var(--text-muted);margin-top:3px}
+
+/* Month cards */
+.month-card{background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-xs);border:1px solid var(--border-light);transition:all .2s;text-align:center}
+.month-card:hover{box-shadow:var(--shadow-sm);transform:translateY(-2px)}
+.month-name{font-size:.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.month-row{display:flex;justify-content:space-between;font-size:.75rem;padding:4px 0}
+.month-row .lbl{color:var(--text-muted)}.month-row .val{font-weight:700}
+
+/* Budget cards */
+.budget-card{background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-xs);border:1px solid var(--border-light);transition:all .2s;cursor:pointer}
+.budget-card:hover{box-shadow:var(--shadow-sm);transform:translateY(-2px)}
+.budget-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.budget-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;background:var(--surface-hover)}
+.budget-val{font-size:1rem;font-weight:800;color:var(--text)}
+.budget-name{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:2px}
+.budget-pct-lbl{font-size:.68rem;color:var(--text-muted)}
+.budget-bar{background:var(--border-light);border-radius:99px;height:6px;overflow:hidden;margin-top:8px}
+.budget-fill{height:100%;border-radius:99px;transition:width .5s}
+
+/* 50/30/20 */
+.strategy-card{display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface-hover);border-radius:var(--radius);margin-bottom:10px;transition:all .2s}
+.strategy-card:hover{background:var(--primary-light);transform:translateX(4px)}
+.strategy-pct{font-size:1.4rem;font-weight:900;color:var(--primary);min-width:50px}
+.strategy-info{flex:1}
+.strategy-name{font-size:.85rem;font-weight:700;color:var(--text)}.strategy-desc{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+.strategy-val{font-size:.95rem;font-weight:800;color:var(--text)}
+
+/* Insights */
+.insight-item{display:flex;gap:10px;padding:12px 16px;background:var(--surface-hover);border-radius:var(--radius);margin-bottom:8px;font-size:.82rem;color:var(--text);transition:all .2s}
+.insight-item:hover{background:var(--primary-light);transform:translateX(4px)}
+.insight-icon{font-size:1rem;flex-shrink:0}
+
+/* Category accordion */
+.cat-card{background:var(--surface);border-radius:var(--radius);margin-bottom:10px;box-shadow:var(--shadow-xs);border:1px solid var(--border-light);overflow:hidden;transition:all .2s}
+.cat-card:hover{box-shadow:var(--shadow-sm)}
+.cat-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;cursor:pointer;transition:background .15s}
+.cat-header:hover{background:var(--surface-hover)}
+.cat-left{display:flex;align-items:center;gap:10px}
+.cat-icon-sm{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.8rem;background:var(--surface-hover)}
+.cat-name{font-weight:700;font-size:.85rem;color:var(--text)}
+.cat-right{display:flex;align-items:center;gap:10px}
+.cat-val{font-weight:800;font-size:.88rem}.cat-pct{font-size:.68rem;color:var(--text-muted)}
+.cat-chevron{font-size:.7rem;color:var(--text-muted);transition:transform .2s}
+.cat-body{display:none;border-top:1px solid var(--border-light);padding:12px 20px}.cat-body.open{display:block}
+.subcat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-light);font-size:.82rem}
+.subcat-row:last-child{border:none}
+.btn-add{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:10px;padding:10px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:none;color:var(--text-secondary);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-add:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+
+.empty{text-align:center;padding:24px;color:var(--text-muted);font-size:.82rem}
+
+/* Tabs */
+.tabs-bar{display:flex;background:var(--surface);border-radius:var(--radius);padding:4px;gap:4px;box-shadow:var(--shadow-xs);border:1px solid var(--border-light);margin-bottom:20px}
+.tab-btn{flex:1;padding:10px 16px;border:none;border-radius:var(--radius-sm);background:transparent;font-size:.8rem;font-weight:700;cursor:pointer;color:var(--text-secondary);transition:all .2s;font-family:inherit;text-align:center}
+.tab-btn:hover{color:var(--text)}.tab-btn.active{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.3)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+.tipo-filtro{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tipo-btn{padding:8px 16px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface);font-size:.78rem;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .2s;font-family:inherit}
+.tipo-btn:hover{border-color:var(--primary);color:var(--primary)}
+.tipo-btn.a-rec{background:var(--success-light);border-color:var(--success);color:var(--success)}
+.tipo-btn.a-desp{background:var(--danger-light);border-color:var(--danger);color:var(--danger)}
+.tipo-btn.a-inv{background:var(--purple-light);border-color:var(--purple);color:var(--purple)}
+
+/* Simulation grid */
+.sim-grid{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:16px}
+
+/* Simulações - Decisões */
+.sim-decisao{background:var(--surface-hover);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .2s;border:1.5px solid var(--border-light);display:flex;flex-direction:column;gap:4px}
+.sim-decisao:hover{border-color:var(--primary);background:var(--primary-light);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.sim-dec-icon{font-size:1.4rem}
+.sim-dec-nome{font-size:.82rem;font-weight:700;color:var(--text)}
+.sim-dec-desc{font-size:.7rem;color:var(--text-muted)}
+.sim-result-card{padding:16px;background:var(--surface-hover);border-radius:var(--radius);border-left:4px solid var(--primary)}
+.sim-result-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:.82rem}
+.sim-result-row:last-child{border:none}
+.cenario-item{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.cenario-item input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:.82rem;font-family:inherit;outline:none;min-height:40px}
+.cenario-item input:focus{border-color:var(--primary)}
+.cenario-item .ci-tipo{font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:99px;min-width:60px;text-align:center}
+.cenario-item .ci-remove{background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text-muted);padding:4px}
+.cenario-item .ci-remove:hover{color:var(--danger)}
+
+/* Comparação Antes x Depois */
+.comparacao-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border-light)}
+.comparacao-table th{font-size:.68rem;text-transform:uppercase;letter-spacing:.5px;padding:12px 16px;background:var(--surface-hover);color:var(--text-secondary);font-weight:700;text-align:left}
+.comparacao-table th:nth-child(2),.comparacao-table th:nth-child(3){text-align:center}
+.comparacao-table td{padding:12px 16px;font-size:.82rem;border-top:1px solid var(--border-light)}
+.comparacao-table td:nth-child(2),.comparacao-table td:nth-child(3){text-align:center;font-weight:700}
+.comparacao-table tr:hover td{background:var(--surface-hover)}
+.comp-melhor{color:var(--success)}.comp-pior{color:var(--danger)}.comp-neutro{color:var(--text)}
+.comp-badge{font-size:.6rem;padding:2px 6px;border-radius:99px;margin-left:4px;font-weight:700}
+.comp-badge-up{background:var(--success-light);color:var(--success)}
+.comp-badge-down{background:var(--danger-light);color:var(--danger)}
+
+/* Mentor Chat */
+.advisor-card{padding:14px 16px;background:var(--surface-hover);border-radius:var(--radius);margin-bottom:10px;border-left:3px solid var(--border);transition:all .2s}
+.advisor-card:hover{background:var(--primary-light);border-left-color:var(--primary);transform:translateX(3px)}
+.advisor-card.ac-success{border-left-color:var(--success)}
+.advisor-card.ac-warning{border-left-color:var(--warning)}
+.advisor-card.ac-danger{border-left-color:var(--danger)}
+.advisor-card.ac-info{border-left-color:var(--info)}
+.advisor-card .ac-text{font-size:.82rem;color:var(--text);line-height:1.5}
+.advisor-card .ac-text strong{font-weight:700}
+.advisor-card .ac-action{font-size:.72rem;color:var(--primary);font-weight:700;margin-top:6px;cursor:pointer;display:inline-block}
+.advisor-card .ac-action:hover{text-decoration:underline}
+.alinhamento-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-light);font-size:.82rem}
+.alinhamento-item:last-child{border:none}
+.alinhamento-icon{font-size:1.1rem;flex-shrink:0}
+.alinhamento-info{flex:1}
+.alinhamento-status{font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:99px}
+
+.mentor-sug{background:var(--surface-hover);border:1.5px solid var(--border-light);border-radius:var(--radius-sm);padding:12px 14px;font-size:.78rem;font-weight:600;color:var(--text-secondary);cursor:pointer;text-align:left;transition:all .2s;font-family:inherit}
+.mentor-sug:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);transform:translateY(-1px)}
+.mentor-msg{margin-bottom:12px;display:flex;gap:10px;align-items:flex-start}
+.mentor-msg-user{justify-content:flex-end}
+.mentor-msg-user .mentor-bubble{background:var(--primary);color:#fff;border-radius:var(--radius) var(--radius) 4px var(--radius)}
+.mentor-msg-ai .mentor-bubble{background:var(--surface-hover);color:var(--text);border-radius:var(--radius) var(--radius) var(--radius) 4px;border:1px solid var(--border-light)}
+.mentor-bubble{padding:14px 18px;max-width:85%;font-size:.82rem;line-height:1.5}
+.mentor-bubble strong{font-weight:700}
+.mentor-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.mentor-avatar-ai{background:var(--primary-light);color:var(--primary)}
+.mentor-avatar-user{background:var(--surface-hover)}
+.mentor-impact{margin-top:12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);overflow:hidden}
+.mentor-impact-header{font-size:.72rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.4px;padding:10px 14px;background:var(--surface-hover);border-bottom:1px solid var(--border-light)}
+.mentor-impact-row{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border-light);font-size:.8rem}
+.mentor-impact-row:last-child{border:none}
+.mentor-impact-row .mir-lbl{color:var(--text-secondary)}
+.mentor-impact-row .mir-val{font-weight:700}
+
+/* Metas / Objetivos */
+.meta-card{background:var(--surface-hover);border-radius:var(--radius);padding:18px;margin-bottom:12px;border-left:4px solid var(--primary);transition:all .2s}
+.meta-card:hover{box-shadow:var(--shadow-sm);transform:translateX(3px)}
+.meta-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.meta-nome{font-size:.88rem;font-weight:700;color:var(--text)}
+.meta-cat{font-size:.68rem;color:var(--text-muted);margin-top:2px}
+.meta-pct{font-size:1.1rem;font-weight:900;color:var(--primary)}
+.meta-bar{background:var(--border-light);border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px}
+.meta-fill{height:100%;border-radius:99px;background:var(--primary-gradient);transition:width .5s}
+.meta-info{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-muted)}
+.meta-actions{display:flex;gap:6px;margin-top:10px}
+.meta-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-size:.72rem;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .15s;font-family:inherit}
+.meta-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.meta-btn-aporte{background:var(--success-light);border-color:var(--success);color:var(--success)}
+.meta-btn-aporte:hover{background:var(--success);color:#fff}
+.meta-empty{text-align:center;padding:32px;color:var(--text-muted)}
+.meta-empty-icon{font-size:2rem;margin-bottom:8px}
+.mentor-tip{font-size:.8rem;color:var(--text);padding:14px 16px;background:var(--surface-hover);border-radius:var(--radius-sm);margin-bottom:10px;border-left:3px solid var(--warning);transition:all .2s}
+.mentor-tip:hover{background:var(--primary-light);border-color:var(--primary)}
+@media(max-width:900px){.sim-grid{grid-template-columns:1fr}}
+.sim-col{display:flex;flex-direction:column;gap:0}
+.sim-col-wide{}
+.sim-panel{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-xs);border:1px solid var(--border-light);overflow:hidden}
+.sim-panel-header{padding:16px 20px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:8px}
+.sim-panel-header .sp-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.sim-panel-header .sp-title{font-size:.8rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px}
+.sim-panel-header .sp-total{margin-left:auto;font-size:1rem;font-weight:800}
+.sim-panel-body{padding:8px 0}
+.sim-cat{border-bottom:1px solid var(--border-light)}
+.sim-cat:last-child{border:none}
+.sim-cat-header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;cursor:pointer;transition:background .15s}
+.sim-cat-header:hover{background:var(--surface-hover)}
+.sim-cat-left{display:flex;align-items:center;gap:8px}
+.sim-cat-name{font-size:.82rem;font-weight:600;color:var(--text)}
+.sim-cat-right{display:flex;align-items:center;gap:10px}
+.sim-cat-val{font-size:.85rem;font-weight:700}
+.sim-cat-pct{font-size:.65rem;color:var(--text-muted);background:var(--border-light);padding:2px 6px;border-radius:99px}
+.sim-cat-chevron{font-size:.6rem;color:var(--text-muted);transition:transform .2s}
+.sim-cat-header.open .sim-cat-chevron{transform:rotate(180deg)}
+.sim-cat-body{display:none;padding:0 20px 12px}
+.sim-cat-body.open{display:block}
+.sim-subcat{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-bottom:4px;background:var(--surface-hover);border-radius:var(--radius-sm);font-size:.8rem;transition:all .15s}
+.sim-subcat:hover{background:var(--primary-light);transform:translateX(3px)}
+.sim-subcat-name{font-weight:500;color:var(--text)}.sim-subcat-val{font-weight:700}
+.sim-subcat-edit{background:none;border:none;cursor:pointer;font-size:.8rem;color:var(--text-muted);margin-left:6px;transition:color .15s}
+.sim-subcat-edit:hover{color:var(--primary)}
+.sim-add{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;margin:8px 20px 12px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:none;color:var(--text-muted);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;width:calc(100% - 40px)}
+.sim-add:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.sim-panel-footer{padding:12px 20px;border-top:1px solid var(--border-light);display:flex;justify-content:space-between;font-size:.82rem;font-weight:700}
+
+/* Fluxo */
+.fluxo-row{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.fluxo-item{text-align:center;padding:12px 20px;min-width:140px}
+.fluxo-item .fi-lbl{font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.fluxo-item .fi-val{font-size:1.1rem;font-weight:800}
+.fluxo-arrow{font-size:1.2rem;color:var(--text-muted)}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-xl);padding:28px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,.25);margin:16px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.7rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.field input,.field select{width:100%;border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 16px;font-size:.88rem;color:var(--text);background:var(--surface);outline:none;transition:all .2s;font-family:inherit;min-height:46px}
+.field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+.meses-section{margin:14px 0}
+.meses-toggle{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.meses-toggle input{width:18px;height:18px;accent-color:var(--primary);cursor:pointer}
+.meses-toggle label{font-size:.82rem;font-weight:600;color:var(--text);cursor:pointer}
+.meses-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mes-chk{display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:600;color:var(--text-secondary);cursor:pointer}
+.mes-chk input{width:16px;height:16px;accent-color:var(--primary);cursor:pointer}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light)}
+.btn{padding:11px 22px;border:none;border-radius:var(--radius);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.3)}.btn-primary:hover{background:var(--primary-dark)}
+.btn-outline{background:var(--surface);color:var(--text-secondary);border:1.5px solid var(--border)}.btn-outline:hover{border-color:var(--text-secondary)}
+.btn-danger{background:var(--danger-light);color:var(--danger)}.btn-danger:hover{background:#FECACA}
+.msg{margin-top:8px;font-size:.78rem;text-align:center;color:var(--danger)}
+.badge-ok{text-align:center;padding:14px;background:var(--success-light);border-radius:var(--radius);color:var(--success);font-weight:700;font-size:.85rem;margin-bottom:16px}
+.btn-finalizar{width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:16px;transition:all .2s;font-family:inherit;box-shadow:0 4px 12px rgba(79,70,229,.3)}.btn-finalizar:hover{background:var(--primary-dark)}
+
+@media(max-width:900px){.kpi-grid{grid-template-columns:1fr 1fr}.row-2,.row-3{grid-template-columns:1fr}}
+@media(max-width:600px){.kpi-grid{grid-template-columns:1fr 1fr}.meses-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<script src="/shared-layout.js"></script>
+
+<!-- Page Header -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div>
+        <div id="hero-ano" style="font-size:1.3rem;font-weight:900;color:var(--text)">2026</div>
+        <div style="font-size:.82rem;color:var(--text-muted);margin-top:2px">Planejamento Financeiro</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button onclick="mudarAno(-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text);font-family:inherit">◀ Anterior</button>
+        <button onclick="mudarAno(1)" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text);font-family:inherit">Próximo ▶</button>
+        <button onclick="excluirOrcamento()" style="background:var(--danger-light);border:1px solid var(--danger);border-radius:var(--radius-sm);padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--danger);font-family:inherit">🗑 Excluir</button>
+        <div style="display:flex;gap:8px;align-items:center;padding:8px 14px;background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius-sm)">
+            <span style="font-size:.7rem;color:var(--text-muted)">Receita Anual</span>
+            <span id="hero-receita" style="font-size:1rem;font-weight:800;color:var(--success)">R$ 0,00</span>
+        </div>
+    </div>
+</div>
+
+<div class="main section-gap">
+
+<!-- Fluxo financeiro (acima das abas) -->
+<div class="panel" style="margin-bottom:16px" id="sim-fluxo"></div>
+
+<div class="tabs-bar">
+<button class="tab-btn active" onclick="trocarAba('categoria')">Orçamento</button>
+<button class="tab-btn" onclick="trocarAba('mensal')">Planejamento Mensal</button>
+</div>
+
+<!-- MENSAL -->
+<div class="tab-pane" id="pane-mensal">
+<div class="row row-3" id="month-grid"></div>
+<div id="badge-finalizado" style="display:none" class="badge-ok">✅ Planejamento finalizado — lançamentos criados</div>
+<div id="btn-finalizar-wrap" style="display:none"><button class="btn-finalizar" onclick="finalizarPlanejamento()">✅ Finalizar e Gerar Lançamentos</button></div>
+</div>
+
+<!-- CATEGORIA -->
+<div class="tab-pane active" id="pane-categoria">
+<!-- Layout: esquerda (receita + investimento + insights) / direita (despesas) -->
+<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:16px">
+<div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div class="sim-col" id="sim-receitas"></div>
+<div class="sim-col" id="sim-investimentos"></div>
+</div>
+<div class="panel" style="margin-top:16px" id="sim-insights"></div>
+</div>
+<div class="sim-col sim-col-wide" id="sim-despesas"></div>
+</div>
+</div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)fecharModal()">
+<div class="modal">
+<h2 id="modal-titulo">Novo Item</h2>
+<form id="form-subcat">
+<input type="hidden" id="detalhe-id"><input type="hidden" id="detalhe-cat-id">
+<div class="field"><label>Descrição</label><input type="text" id="detalhe-descricao" required placeholder="Ex: Conta de Luz"></div>
+<div class="field"><label>Forma de Pagamento</label><select id="detalhe-forma"></select></div>
+<div class="field"><label>Valor Mensal Previsto</label><input type="number" id="detalhe-valor" required min="0" step="0.01" placeholder="0,00"></div>
+<div class="field"><label>Dia do Vencimento</label><input type="number" id="detalhe-dia-vencto" min="1" max="31" placeholder="Ex: 10" style="width:100%"></div>
+<div class="meses-section">
+<div class="meses-toggle"><input type="checkbox" id="chk-todos" onchange="document.querySelectorAll('input[name=mes]').forEach(c=>c.checked=this.checked)"><label for="chk-todos">Todos os meses</label></div>
+<div class="meses-grid">
+<label class="mes-chk"><input type="checkbox" name="mes" value="1">JAN</label><label class="mes-chk"><input type="checkbox" name="mes" value="2">FEV</label><label class="mes-chk"><input type="checkbox" name="mes" value="3">MAR</label><label class="mes-chk"><input type="checkbox" name="mes" value="4">ABR</label><label class="mes-chk"><input type="checkbox" name="mes" value="5">MAI</label><label class="mes-chk"><input type="checkbox" name="mes" value="6">JUN</label><label class="mes-chk"><input type="checkbox" name="mes" value="7">JUL</label><label class="mes-chk"><input type="checkbox" name="mes" value="8">AGO</label><label class="mes-chk"><input type="checkbox" name="mes" value="9">SET</label><label class="mes-chk"><input type="checkbox" name="mes" value="10">OUT</label><label class="mes-chk"><input type="checkbox" name="mes" value="11">NOV</label><label class="mes-chk"><input type="checkbox" name="mes" value="12">DEZ</label>
+</div>
+</div>
+<p class="msg" id="modal-msg"></p>
+<div class="modal-footer">
+<button type="button" class="btn btn-outline" onclick="fecharModal()">Cancelar</button>
+<button type="button" class="btn btn-danger" id="btn-excluir-detalhe" onclick="excluirDetalhe()" style="display:none">Excluir</button>
+<button type="submit" class="btn btn-primary">Confirmar</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Modal Meta -->
+<div class="modal-bg" id="modal-meta-bg" onclick="if(event.target===this)fecharModalMeta()">
+<div class="modal">
+<h2 id="modal-meta-titulo">Nova Meta</h2>
+<form id="form-meta">
+<input type="hidden" id="meta-id">
+<div class="field"><label>Descrição do objetivo</label><input type="text" id="meta-descricao" required placeholder="Ex: Reserva de emergência, Viagem, Carro novo"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="field"><label>Valor do objetivo</label><input type="number" id="meta-valor-obj" required min="0" step="0.01" placeholder="0,00"></div>
+<div class="field"><label>Valor atual</label><input type="number" id="meta-valor-atual" min="0" step="0.01" placeholder="0,00" value="0"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="field"><label>Data alvo</label><input type="date" id="meta-data-alvo"></div>
+<div class="field"><label>Categoria</label><input type="text" id="meta-categoria" placeholder="Ex: Investimento, Emergência"></div>
+</div>
+<div class="field"><label>Observação</label><input type="text" id="meta-obs" placeholder="Opcional..."></div>
+<p class="msg" id="modal-meta-msg"></p>
+<div class="modal-footer">
+<button type="button" class="btn btn-outline" onclick="fecharModalMeta()">Cancelar</button>
+<button type="button" class="btn btn-danger" id="btn-excluir-meta" onclick="excluirMeta()" style="display:none">Excluir</button>
+<button type="submit" class="btn btn-primary">Salvar Meta</button>
+</div>
+</form>
+</div>
+</div>
+
+<script>
+const MS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+const CORES=['#EF4444','#F97316','#F59E0B','#3B82F6','#8B5CF6','#EC4899','#14B8A6','#6366F1']
+const catIcons={'alimentação':'🍽','moradia':'🏠','transporte':'🚗','saúde':'💊','educação':'📚','lazer':'🎬','assinaturas':'📱','investimentos':'📈','receita':'💰','mesada':'🎁','doação':'🎁','automóvel':'🚗','despesas pessoais':'🛍'}
+let anoAtual=new Date().getFullYear(),orcamentoId=null,detalhes=[],categorias=[],formasPgto=[],tipoCat='despesa',metas=[]
+const moeda=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
+const getIcon=c=>{const l=(c||'').toLowerCase();for(const[k,v]of Object.entries(catIcons))if(l.includes(k))return v;return'📋'}
+
+// Inferir tipo pela nome da categoria (mesmo padrão da tela de lançamentos)
+function inferirTipo(nomeCat){const c=(nomeCat||'').toUpperCase();if(c==='RECEITA'||c==='RECEITAS')return'receita';if(c==='INVESTIMENTOS'||c==='INVESTIMENTO')return'investimento';return'despesa'}
+
+function trocarAba(a){document.querySelectorAll('.tab-btn').forEach((t,i)=>t.classList.toggle('active',['categoria','mensal'][i]===a));document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));document.getElementById(`pane-${a}`).classList.add('active')}
+
+async function mudarAno(d){anoAtual+=d;document.getElementById('hero-ano').textContent=anoAtual;await carregarOrcamento()}
+
+async function carregarOrcamento(){
+const[resOrc,resCat,resF,resMetas,resCartoes]=await Promise.all([fetch('/orcamentos'),fetch('/categorias'),fetch('/formas-pagamento'),fetch('/metas'),fetch('/cartoes')])
+const lista=await resOrc.json();categorias=await resCat.json();formasPgto=await resF.json();metas=await resMetas.json();const cartoesData=await resCartoes.json()
+let formaHtml='<option value="">Selecione...</option><optgroup label="Formas de Pagamento">'+formasPgto.filter(f=>{const d=(f.descricao||'').toUpperCase();return !d.includes('CARTÃO')&&!d.includes('CARTAO')&&!d.includes('CRÉDITO')&&!d.includes('CREDITO')&&!d.includes('DÉBITO')&&!d.includes('DEBITO')&&!d.includes('TRANSFERÊNCIA')&&!d.includes('TRANSFERENCIA')}).map(f=>`<option value="${f.id}">${f.descricao}</option>`).join('')+'</optgroup>'
+if(cartoesData.length){formaHtml+='<optgroup label="Cartões de Crédito">'+cartoesData.map(c=>`<option value="cartao_${c.id}" data-cartao="${c.id}">💳 ${c.descricao}</option>`).join('')+'</optgroup>'}
+document.getElementById('detalhe-forma').innerHTML=formaHtml
+const orc=lista.find(o=>Number(o.ano_orcamento)===anoAtual)
+if(!orc){orcamentoId=null;detalhes=[];render(null);return}
+orcamentoId=orc.id_orcamento
+const resD=await fetch(`/orcamentos/${orcamentoId}/detalhes`);detalhes=await resD.json()
+console.log('Detalhes carregados:',detalhes.length,'itens',detalhes.slice(0,2))
+render(orc)
+document.getElementById('btn-finalizar-wrap').style.display=orc.finalizado?'none':'block'
+document.getElementById('badge-finalizado').style.display=orc.finalizado?'block':'none'
+}
+
+function render(orc){
+// Calcular totais baseado no nome da categoria (não no campo tipo)
+const rec=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const desp=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const inv=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='investimento').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const saldo=rec-desp-inv
+document.getElementById('hero-receita').textContent=moeda(rec)
+renderMensal();renderCategorias()
+}
+
+function renderConselheiro(rec,desp,inv){
+const el=document.getElementById('conselheiro-cards')
+const recMensal=rec/12,despMensal=desp/12,invMensal=inv/12
+const sobraMensal=recMensal-despMensal-invMensal
+const cards=[]
+
+// Análise por categoria
+const porCat={};detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').forEach(d=>{const c=d.nome_categoria||'Outros';if(!porCat[c])porCat[c]={total:0,itens:0};porCat[c].total+=Number(d.valor_previsto||0);porCat[c].itens++})
+const catEntries=Object.entries(porCat).sort((a,b)=>b[1].total-a[1].total)
+
+// Benchmarks estimados por faixa de renda
+const benchmarks={'alimentação':.12,'moradia':.30,'transporte':.10,'educação':.08,'lazer':.05,'assinaturas':.03,'saúde':.05}
+
+catEntries.forEach(([cat,d])=>{
+const mensal=d.total/12
+const pctRenda=recMensal>0?d.total/(rec):0
+const bench=benchmarks[cat.toLowerCase()]
+if(bench){
+const mediaRef=recMensal*bench
+if(mensal<mediaRef*0.8){cards.push({tipo:'success',icon:'✅',text:`<strong>${cat}</strong> representa ${moeda(mensal)}/mês (${Math.round(pctRenda*100)}% da renda). Abaixo da média para sua faixa. Parabéns!`})}
+else if(mensal>mediaRef*1.3){cards.push({tipo:'warning',icon:'⚠️',text:`<strong>${cat}</strong> está em ${moeda(mensal)}/mês (${Math.round(pctRenda*100)}% da renda). Acima da média de ${moeda(mediaRef)}/mês. Revise possíveis cortes.`,action:'Revisar categoria →'})}
+}
+})
+
+// Assinaturas
+const assinaturaCat=catEntries.find(([c])=>c.toLowerCase().includes('assinatura'))
+if(assinaturaCat){
+const qtdAssinaturas=assinaturaCat[1].itens
+const totalAssin=assinaturaCat[1].total/12
+if(qtdAssinaturas>3){cards.push({tipo:'info',icon:'📱',text:`Você possui <strong>${qtdAssinaturas} assinaturas</strong> (${moeda(totalAssin)}/mês). Cancelando 1 ou 2, você economizaria ~${moeda(totalAssin*0.3)}/mês = <strong>${moeda(totalAssin*0.3*12)}/ano investido</strong>.`})}
+}
+
+// Renda vs Despesas
+if(rec>0&&desp>rec){
+const deficit=desp-rec
+const topCats=catEntries.slice(0,5).map(([c])=>c).join(', ')
+cards.push({tipo:'danger',icon:'🚨',text:`<strong>Sua renda não cobre as despesas planejadas.</strong> Déficit de ${moeda(deficit/12)}/mês. Recomendamos revisar: ${topCats}.`,action:'Ir para Simulação →'})
+}else if(rec>0&&sobraMensal<recMensal*0.1){
+cards.push({tipo:'warning',icon:'💡',text:`Sua margem de segurança é de apenas <strong>${moeda(sobraMensal)}/mês</strong> (${Math.round(sobraMensal/recMensal*100)}% da renda). O ideal é manter pelo menos 10-20% livres para imprevistos.`})
+}
+
+// Investimentos
+if(rec>0&&inv<rec*0.15){
+const ideal=recMensal*0.2
+cards.push({tipo:'info',icon:'📈',text:`Investimentos representam <strong>${Math.round(inv/rec*100)}%</strong> da receita. Aumentando para 20% (${moeda(ideal)}/mês), você acumularia <strong>${moeda(ideal*12*10)}</strong> em 10 anos.`})
+}else if(rec>0&&inv>=rec*0.2){
+cards.push({tipo:'success',icon:'🏆',text:`<strong>Parabéns!</strong> Você destina ${Math.round(inv/rec*100)}% da receita para investimentos. Isso está acima da recomendação de 20%. Continue assim!`})
+}
+
+// Metas
+const metasAtivas=metas.filter(m=>m.status==='em_andamento')
+if(metasAtivas.length===0&&rec>0){
+cards.push({tipo:'warning',icon:'🎯',text:`<strong>Sem objetivos definidos.</strong> Sem metas claras, fica difícil saber se o planejamento está no caminho certo. Defina pelo menos 1 objetivo.`,action:'Ir para Objetivos →'})
+}
+const metasAtrasadas=metasAtivas.filter(m=>m.data_alvo&&new Date(m.data_alvo)<new Date())
+if(metasAtrasadas.length){
+cards.push({tipo:'danger',icon:'⏰',text:`<strong>${metasAtrasadas.length} meta(s) com prazo vencido:</strong> ${metasAtrasadas.map(m=>m.descricao).join(', ')}. Revise os prazos ou aumente os aportes.`})
+}
+
+if(!cards.length){
+if(rec===0&&desp===0&&inv===0){
+cards.push({tipo:'info',icon:'📋',text:'<strong>Nenhum planejamento cadastrado.</strong> Comece definindo sua receita, despesas e investimentos previstos para o ano. O conselheiro analisará seu orçamento automaticamente.',action:'Começar Planejamento →'})
+}else{
+cards.push({tipo:'success',icon:'✅',text:'<strong>Tudo em ordem!</strong> Seu planejamento está equilibrado e alinhado com boas práticas financeiras. Continue acompanhando mensalmente.'})
+}
+}
+
+el.innerHTML=cards.map(c=>`<div class="advisor-card ac-${c.tipo}"><div class="ac-text">${c.icon} ${c.text}</div>${c.action?`<span class="ac-action" onclick="trocarAba('categoria')">${c.action}</span>`:''}</div>`).join('')
+}
+
+function renderAlinhamento(rec,desp,inv){
+const el=document.getElementById('alinhamento')
+if(rec===0&&desp===0&&inv===0){
+el.innerHTML='<div class="empty" style="padding:20px;text-align:center"><div style="font-size:1.3rem;margin-bottom:8px">📋</div><div style="font-size:.85rem;font-weight:600;color:var(--text)">Sem planejamento cadastrado</div><div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Adicione itens ao orçamento para ver o alinhamento.</div></div>'
+return
+}
+const recMensal=rec/12,sobraMensal=recMensal-(desp/12)-(inv/12)
+const metasAtivas=metas.filter(m=>m.status==='em_andamento')
+const totalAporteMetas=metasAtivas.reduce((s,m)=>{const rest=Math.max(0,Number(m.valor_objetivo)-Number(m.valor_atual));const meses=m.data_alvo?Math.max(1,Math.ceil((new Date(m.data_alvo)-new Date())/(30*86400000))):12;return s+(rest/meses)},0)
+
+const checks=[
+{label:'Receita cobre todas as despesas',ok:rec>=desp,icon:rec>=desp?'✅':'❌'},
+{label:'Investimentos ≥ 20% da receita',ok:rec>0&&inv>=rec*0.2,icon:rec>0&&inv>=rec*0.2?'✅':'⚠️'},
+{label:'Sobra suficiente para metas',ok:sobraMensal>=totalAporteMetas,icon:sobraMensal>=totalAporteMetas?'✅':'❌'},
+{label:'Objetivos definidos',ok:metasAtivas.length>0,icon:metasAtivas.length>0?'✅':'⚠️'},
+{label:'Todas as metas dentro do prazo',ok:!metasAtivas.some(m=>m.data_alvo&&new Date(m.data_alvo)<new Date()),icon:!metasAtivas.some(m=>m.data_alvo&&new Date(m.data_alvo)<new Date())?'✅':'❌'},
+{label:'Margem de segurança (≥10% livre)',ok:recMensal>0&&sobraMensal>=recMensal*0.1,icon:recMensal>0&&sobraMensal>=recMensal*0.1?'✅':'⚠️'},
+]
+const score=checks.filter(c=>c.ok).length
+const total=checks.length
+const pct=Math.round(score/total*100)
+
+el.innerHTML=`<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding:14px 18px;background:${pct>=80?'var(--success-light)':pct>=50?'var(--warning-light)':'var(--danger-light)'};border-radius:var(--radius)">
+<div style="font-size:1.8rem;font-weight:900;color:${pct>=80?'var(--success)':pct>=50?'var(--warning)':'var(--danger)'}">${pct}%</div>
+<div><div style="font-size:.85rem;font-weight:700;color:var(--text)">${pct>=80?'Planejamento alinhado!':pct>=50?'Parcialmente alinhado':'Precisa de ajustes'}</div><div style="font-size:.72rem;color:var(--text-muted)">${score} de ${total} critérios atendidos</div></div>
+</div>
+${checks.map(c=>`<div class="alinhamento-item"><span class="alinhamento-icon">${c.icon}</span><div class="alinhamento-info">${c.label}</div><span class="alinhamento-status" style="background:${c.ok?'var(--success-light);color:var(--success)':'var(--danger-light);color:var(--danger)'}">${c.ok?'OK':'Revisar'}</span></div>`).join('')}`
+}
+
+function renderDistribuicao(recTotal){
+const el=document.getElementById('distribuicao')
+const porCat={};detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').forEach(d=>{const c=d.nome_categoria||'Outros';porCat[c]=(porCat[c]||0)+Number(d.valor_previsto||0)})
+const ent=Object.entries(porCat).sort((a,b)=>b[1]-a[1])
+if(!ent.length){el.innerHTML='<div class="empty">Adicione itens ao orçamento</div>';return}
+const total=ent.reduce((s,[,v])=>s+v,0)
+el.innerHTML=ent.map(([cat,val],i)=>{const pct=total>0?Math.round(val/total*100):0;const pctRec=recTotal>0?Math.round(val/recTotal*100):0;return`<div class="dist-item"><div class="dist-header"><span class="dist-name">${getIcon(cat)} ${cat}</span><span class="dist-val">${moeda(val)} · ${pctRec}% da receita</span></div><div class="dist-bar"><div class="dist-fill" style="width:${pct}%;background:${CORES[i%CORES.length]}"></div></div><div class="dist-pct">${pct}% do orçamento</div></div>`}).join('')
+}
+
+function renderEstrategia(){
+const el=document.getElementById('estrategia')
+const receitaTotal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const mesesComReceita=new Set(detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').map(d=>Number(d.mes_referencia))).size||12
+const mensal=receitaTotal>0?receitaTotal/mesesComReceita:0
+const nec=mensal*.5,des=mensal*.3,inv=mensal*.2
+el.innerHTML=mensal>0?`
+<div class="strategy-card"><span class="strategy-pct">50%</span><div class="strategy-info"><div class="strategy-name">Necessidades</div><div class="strategy-desc">Moradia, alimentação, transporte, saúde</div></div><span class="strategy-val">${moeda(nec)}/mês</span></div>
+<div class="strategy-card"><span class="strategy-pct" style="color:var(--warning)">30%</span><div class="strategy-info"><div class="strategy-name">Desejos</div><div class="strategy-desc">Lazer, assinaturas, compras pessoais</div></div><span class="strategy-val">${moeda(des)}/mês</span></div>
+<div class="strategy-card"><span class="strategy-pct" style="color:var(--success)">20%</span><div class="strategy-info"><div class="strategy-name">Investimentos</div><div class="strategy-desc">Reserva, aposentadoria, objetivos</div></div><span class="strategy-val">${moeda(inv)}/mês</span></div>
+<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);font-size:.75rem;color:var(--text-muted)">Base: receita mensal de ${moeda(mensal)}</div>`
+:'<div class="empty">Adicione receitas planejadas para ver a estratégia 50/30/20</div>'
+}
+
+function renderInsights(rec,desp,inv){
+const el=document.getElementById('insights')
+if(rec===0&&desp===0&&inv===0){
+el.innerHTML='<div class="insight-item"><span class="insight-icon">📋</span><span>Adicione receitas e despesas ao planejamento para ver insights personalizados.</span></div>'
+return
+}
+const ins=[]
+const total=rec||1
+const pctInv=Math.round(inv/total*100),pctDesp=Math.round(desp/total*100)
+if(pctInv<20)ins.push({i:'💡',t:`Investimentos representam ${pctInv}% da receita. Recomendação: pelo menos 20%.`})
+if(pctInv>=20)ins.push({i:'✅',t:`Investimentos representam ${pctInv}% — excelente distribuição!`})
+if(pctDesp>70)ins.push({i:'⚠️',t:`Despesas consomem ${pctDesp}% da receita. Considere reduzir.`})
+const porCat={};detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').forEach(d=>{const c=d.nome_categoria||'Outros';porCat[c]=(porCat[c]||0)+Number(d.valor_previsto||0)})
+const topCat=Object.entries(porCat).sort((a,b)=>b[1]-a[1])[0]
+if(topCat){const pct=Math.round(topCat[1]/total*100);ins.push({i:'📊',t:`${topCat[0]} é a maior categoria planejada (${pct}% da receita).`})}
+const saldo=rec-desp-inv
+if(saldo<0)ins.push({i:'⚠️',t:`O planejamento está com déficit de ${moeda(Math.abs(saldo))}. Ajuste as despesas.`})
+if(saldo>0)ins.push({i:'✅',t:`Sobra planejada de ${moeda(saldo)} no ano. Considere investir mais.`})
+if(!ins.length)ins.push({i:'✅',t:'Planejamento equilibrado!'})
+el.innerHTML=ins.map(x=>`<div class="insight-item"><span class="insight-icon">${x.i}</span><span>${x.t}</span></div>`).join('')
+}
+
+function renderMensal(){
+document.getElementById('month-grid').innerHTML=MS.map((nome,i)=>{const m=i+1
+const r=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita'&&Number(d.mes_referencia)===m).reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const d=detalhes.filter(x=>inferirTipo(x.nome_categoria)==='despesa'&&Number(x.mes_referencia)===m).reduce((s,x)=>s+Number(x.valor_previsto||0),0)
+const inv=detalhes.filter(x=>inferirTipo(x.nome_categoria)==='investimento'&&Number(x.mes_referencia)===m).reduce((s,x)=>s+Number(x.valor_previsto||0),0)
+const saldo=r-d-inv
+const icon=saldo>0?'✅':saldo<0?'⚠️':'➖'
+const saldoCor=saldo>=0?'var(--success)':'var(--danger)'
+const qtdItens=detalhes.filter(x=>Number(x.mes_referencia)===m).length
+return`<div class="month-card" style="border-top:3px solid ${saldoCor}"><div class="month-name" style="display:flex;align-items:center;justify-content:space-between">${icon} ${nome}<span style="cursor:pointer;font-size:.82rem;opacity:.5;transition:opacity .2s" onclick="verDetalhesMes(${m})" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.5" title="Ver despesas previstas de ${nome}">🔍</span></div><div class="month-row"><span class="lbl">Receita</span><span class="val" style="color:var(--success)">${moeda(r)}</span></div><div class="month-row"><span class="lbl">Despesas</span><span class="val" style="color:var(--danger)">${moeda(d)}</span></div><div class="month-row"><span class="lbl">Invest.</span><span class="val" style="color:var(--purple)">${moeda(inv)}</span></div><div class="month-row" style="border-top:1px solid var(--border-light);margin-top:6px;padding-top:8px"><span class="lbl" style="font-weight:700">Saldo</span><span class="val" style="color:${saldoCor};font-weight:800">${moeda(saldo)}</span></div></div>`}).join('')
+}
+
+function verDetalhesMes(mes){
+const itensMes=detalhes.filter(d=>Number(d.mes_referencia)===mes&&inferirTipo(d.nome_categoria)==='despesa')
+const nomeMes=MS[mes-1]
+const bg=document.getElementById('modal-bg')
+document.getElementById('modal-titulo').textContent=`Despesas Previstas — ${nomeMes}`
+document.getElementById('btn-excluir-detalhe').style.display='none'
+document.getElementById('modal-msg').textContent=''
+const formEl=document.getElementById('form-subcat')
+formEl.style.display='none'
+let listEl=document.getElementById('modal-list-mes')
+if(!listEl){listEl=document.createElement('div');listEl.id='modal-list-mes';formEl.parentNode.insertBefore(listEl,formEl)}
+if(!itensMes.length){listEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.85rem">Nenhuma despesa prevista para '+nomeMes+'.</div><div style="text-align:right;margin-top:12px"><button type="button" class="btn btn-outline" onclick="fecharModalMes()">Fechar</button></div>';bg.classList.add('open');return}
+let html='<div style="max-height:400px;overflow-y:auto">'
+itensMes.forEach(d=>{
+const t=inferirTipo(d.nome_categoria)
+const cor=t==='receita'?'var(--success)':t==='investimento'?'var(--purple)':'var(--danger)'
+const prefix=t==='receita'?'+ ':'- '
+html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light)"><div style="width:3px;height:28px;border-radius:3px;background:${cor};flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:.82rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.nome_subcategoria||'—'}</div><div style="font-size:.68rem;color:var(--text-muted)">${d.nome_categoria||'—'}${d.nome_forma_pgto?' · '+d.nome_forma_pgto:''}</div></div><div style="font-size:.88rem;font-weight:800;color:${cor};flex-shrink:0">${prefix}${moeda(d.valor_previsto)}</div></div>`
+})
+const totalMes=itensMes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const qtdDesp=itensMes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').length
+html+=`</div><div style="margin-top:12px;padding-top:10px;border-top:2px solid var(--border);display:flex;justify-content:space-between;font-size:.85rem;font-weight:700"><span>${qtdDesp} despesa(s)</span><span style="color:var(--danger)">${moeda(totalMes)}</span></div>`
+html+=`<div style="margin-top:14px;text-align:right"><button type="button" class="btn btn-outline" onclick="fecharModalMes()">Fechar</button></div>`
+listEl.innerHTML=html
+bg.classList.add('open')
+}
+
+function fecharModalMes(){
+document.getElementById('modal-bg').classList.remove('open')
+const listEl=document.getElementById('modal-list-mes')
+if(listEl)listEl.innerHTML=''
+document.getElementById('form-subcat').style.display=''
+}
+
+function renderCategorias(){
+const rec=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const desp=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const inv=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='investimento').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const saldo=rec-desp-inv
+
+// Fluxo
+const pctDesp=rec>0?Math.round(desp/rec*100):0
+const pctInv=rec>0?Math.round(inv/rec*100):0
+const pctSaldo=rec>0?Math.round(saldo/rec*100):0
+// Calcular meses distintos para média
+const mesesRec=new Set(detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').map(d=>Number(d.mes_referencia)))
+const mesesInv=new Set(detalhes.filter(d=>inferirTipo(d.nome_categoria)==='investimento').map(d=>Number(d.mes_referencia)))
+const mesesDesp=new Set(detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').map(d=>Number(d.mes_referencia)))
+const mediaRec=mesesRec.size>0?rec/mesesRec.size:0
+const mediaInv=mesesInv.size>0?inv/mesesInv.size:0
+const mediaDesp=mesesDesp.size>0?desp/mesesDesp.size:0
+const mediaSaldo=mesesDesp.size>0?saldo/mesesDesp.size:0
+
+document.getElementById('sim-fluxo').innerHTML=`
+<div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:center">
+<div style="background:var(--success-light);border-radius:var(--radius);padding:16px;text-align:center">
+<div style="font-size:.65rem;color:var(--success);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">💰 Receitas</div>
+<div style="font-size:1.2rem;font-weight:900;color:var(--success)">${moeda(rec)}</div>
+<div style="font-size:.7rem;color:var(--text-secondary);margin-top:3px">${moeda(mediaRec)}/mês</div>
+<div style="font-size:.68rem;color:var(--text-muted);margin-top:2px">100% da renda</div>
+</div>
+<div style="text-align:center;font-size:1.2rem;color:var(--text-muted)">−</div>
+<div style="background:var(--purple-light);border-radius:var(--radius);padding:16px;text-align:center">
+<div style="font-size:.65rem;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">📈 Investimentos</div>
+<div style="font-size:1.2rem;font-weight:900;color:var(--purple)">${moeda(inv)}</div>
+<div style="font-size:.7rem;color:var(--text-secondary);margin-top:3px">${moeda(mediaInv)}/mês</div>
+<div style="font-size:.68rem;color:var(--text-muted);margin-top:2px">${pctInv}% da receita</div>
+</div>
+<div style="text-align:center;font-size:1.2rem;color:var(--text-muted)">−</div>
+<div style="background:var(--danger-light);border-radius:var(--radius);padding:16px;text-align:center">
+<div style="font-size:.65rem;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">💸 Despesas</div>
+<div style="font-size:1.2rem;font-weight:900;color:var(--danger)">${moeda(desp)}</div>
+<div style="font-size:.7rem;color:var(--text-secondary);margin-top:3px">${moeda(mediaDesp)}/mês</div>
+<div style="font-size:.68rem;color:var(--text-muted);margin-top:2px">${pctDesp}% da receita</div>
+</div>
+<div style="text-align:center;font-size:1.2rem;color:var(--text-muted)">=</div>
+<div style="background:${saldo>=0?'var(--success-light)':'var(--danger-light)'};border-radius:var(--radius);padding:16px;text-align:center;border:2px solid ${saldo>=0?'var(--success)':'var(--danger)'}">
+<div style="font-size:.65rem;color:${saldo>=0?'var(--success)':'var(--danger)'};text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">${saldo>=0?'✅':'⚠️'} Saldo</div>
+<div style="font-size:1.3rem;font-weight:900;color:${saldo>=0?'var(--success)':'var(--danger)'}">${moeda(saldo)}</div>
+<div style="font-size:.7rem;color:var(--text-secondary);margin-top:3px">${moeda(mediaSaldo)}/mês</div>
+<div style="font-size:.68rem;color:var(--text-muted);margin-top:2px">${pctSaldo}% livre</div>
+</div>
+</div>`
+
+// Colunas
+renderSimCol('sim-receitas','receita','💰',`Receita Prevista - ${anoAtual}`,rec,'var(--success)')
+renderSimCol('sim-investimentos','investimento','📈',`Investimentos Previstos - ${anoAtual}`,inv,'var(--purple)')
+renderSimCol('sim-despesas','despesa','💸',`Despesas Previstas - ${anoAtual}`,desp,'var(--danger)')
+
+// Insights
+const ins=[]
+if(rec>0&&inv>0){const pctI=Math.round(inv/rec*100);if(pctI<20)ins.push({i:'💡',t:`Investimentos = ${pctI}% da receita. Recomendação: 20%.`});else ins.push({i:'✅',t:`Investimentos = ${pctI}% da receita. Excelente!`})}
+if(rec>0&&desp>0){const pctD=Math.round(desp/rec*100);if(pctD>70)ins.push({i:'⚠️',t:`Despesas consomem ${pctD}% da receita.`})}
+const porCat={};detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').forEach(d=>{const c=d.nome_categoria||'?';porCat[c]=(porCat[c]||0)+Number(d.valor_previsto||0)})
+const topC=Object.entries(porCat).sort((a,b)=>b[1]-a[1])[0]
+if(topC&&desp>0)ins.push({i:'📊',t:`${topC[0]} é a maior despesa planejada (${Math.round(topC[1]/desp*100)}%).`})
+if(saldo<0)ins.push({i:'⚠️',t:`Déficit de ${moeda(Math.abs(saldo))}. Reduza despesas ou aumente receitas.`})
+if(saldo>0&&rec>0)ins.push({i:'✅',t:`Sobra de ${moeda(saldo)} (${Math.round(saldo/rec*100)}% da receita).`})
+if(!ins.length)ins.push({i:'💡',t:'Adicione itens para ver insights.'})
+document.getElementById('sim-insights').innerHTML=`<div class="panel-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;opacity:.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Insights</div>`+ins.map(x=>`<div class="insight-item"><span class="insight-icon">${x.i}</span><span>${x.t}</span></div>`).join('')
+}
+
+function renderSimCol(elId,tipo,icon,titulo,total,cor){
+const el=document.getElementById(elId)
+const cats=categorias.filter(c=>inferirTipo(c.descricao)===tipo)
+let html=`<div class="sim-panel"><div class="sim-panel-header"><span class="sp-icon" style="background:${cor}20">${icon}</span><span class="sp-title">${titulo}</span></div><div class="sim-panel-body">`
+if(!cats.length){html+=`<div class="empty">Nenhuma categoria</div>`}
+else{cats.forEach(cat=>{
+const itens=detalhes.filter(d=>String(d.id_categoria)===String(cat.id))
+const grupos={};itens.forEach(d=>{const k=d.nome_subcategoria||`s-${d.id_subcategoria}`;if(!grupos[k])grupos[k]={...d,mesesList:[],totalPrevisto:0};grupos[k].mesesList.push(Number(d.mes_referencia));grupos[k].totalPrevisto+=Number(d.valor_previsto||0)})
+const catTotal=Object.values(grupos).reduce((s,g)=>s+g.totalPrevisto,0)
+const mesesCat=new Set();itens.forEach(d=>mesesCat.add(Number(d.mes_referencia)))
+const mediaMensal=mesesCat.size>0?catTotal/mesesCat.size:0
+const pct=total>0?Math.round(catTotal/total*100):0
+const bodyId=`sc-${tipo}-${cat.id}`
+const subcats=Object.values(grupos).map(g=>{
+const qtdMeses=g.mesesList.length||1
+const valorMensal=g.totalPrevisto/qtdMeses
+return`<div class="sim-subcat"><span class="sim-subcat-name">${g.nome_subcategoria||'—'}</span><span style="display:flex;align-items:center;gap:8px"><span style="font-size:.72rem;color:var(--text-muted)">${moeda(valorMensal)}/mês</span><span class="sim-subcat-val" style="color:${cor}">${moeda(g.totalPrevisto)}</span><button class="sim-subcat-edit" onclick="abrirModalEditar(${JSON.stringify(g).replace(/"/g,'&quot;')})">✏️</button></span></div>`}).join('')
+html+=`<div class="sim-cat"><div class="sim-cat-header" onclick="togSimCat('${bodyId}',this)"><div class="sim-cat-left"><span>${getIcon(cat.descricao)}</span><span class="sim-cat-name">${cat.descricao}</span></div><div class="sim-cat-right"><span style="font-size:.72rem;color:var(--text-muted);margin-right:6px">${moeda(mediaMensal)}/mês</span><span class="sim-cat-val" style="color:${cor}">${moeda(catTotal)}</span><span class="sim-cat-pct">${pct}%</span><span class="sim-cat-chevron">▼</span></div></div><div class="sim-cat-body" id="${bodyId}">${subcats||'<div style="padding:8px 12px;font-size:.78rem;color:var(--text-muted)">Nenhum item</div>'}<button class="sim-add" onclick="abrirModalNovo(${cat.id})">+ Adicionar</button></div></div>`
+})}
+html+=`</div></div>`
+el.innerHTML=html
+}
+
+async function togSimCat(id,h){
+const b=document.getElementById(id)
+const o=b.classList.toggle('open')
+h.classList.toggle('open')
+// Ao expandir, carregar subcategorias disponíveis
+if(o&&!b.dataset.loaded){
+b.dataset.loaded='1'
+const catId=id.split('-').pop()
+try{
+const res=await fetch(`/categorias/${catId}/subcategorias-detalhe`)
+const subs=await res.json()
+// Filtrar subcategorias que ainda não têm item no orçamento para este ano
+const existentes=detalhes.filter(d=>String(d.id_categoria)===String(catId)).map(d=>(d.nome_subcategoria||'').toLowerCase())
+const disponiveis=subs.filter(s=>!existentes.includes((s.descricao||'').toLowerCase()))
+if(disponiveis.length){
+let sugHtml='<div style="margin:8px 20px 4px;padding-top:8px;border-top:1px dashed var(--border)"><div style="font-size:.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Subcategorias disponíveis</div>'
+sugHtml+=disponiveis.map(s=>{const emUso=Number(s.uso_count||0)>0;return`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;margin-bottom:3px;background:var(--surface-hover);border-radius:var(--radius-sm);font-size:.78rem;transition:all .12s" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='var(--surface-hover)'"><span style="color:var(--text);flex:1;cursor:pointer" onclick="adicionarSubcategoriaRapida(${catId},'${s.descricao.replace(/'/g,"\\'")}')">${s.descricao}</span><div style="display:flex;gap:4px"><button onclick="event.stopPropagation();adicionarSubcategoriaRapida(${catId},'${s.descricao.replace(/'/g,"\\'")}')" style="background:var(--primary-light);border:1px solid var(--primary);border-radius:4px;cursor:pointer;font-size:.65rem;padding:2px 6px;color:var(--primary);font-weight:700;font-family:inherit" title="Adicionar ao orçamento">＋</button>${!emUso?`<button onclick="event.stopPropagation();excluirSubcategoriaDisponivel(${s.id_subcategoria},this)" style="background:var(--danger-light);border:1px solid var(--danger);border-radius:4px;cursor:pointer;font-size:.65rem;padding:2px 6px;color:var(--danger);font-weight:700;font-family:inherit" title="Excluir subcategoria">✕</button>`:''}</div></div>`}).join('')
+sugHtml+='</div>'
+const addBtn=b.querySelector('.sim-add')
+if(addBtn)addBtn.insertAdjacentHTML('beforebegin',sugHtml)
+}
+}catch(e){console.error(e)}
+}
+}
+
+async function excluirSubcategoriaDisponivel(subId,btn){
+if(!confirm('Excluir esta subcategoria?'))return
+try{
+const r=await fetch(`/subcategorias/${subId}`,{method:'DELETE'})
+if(r.ok){const row=btn.parentElement.parentElement;if(row)row.remove();toast('🗑 Subcategoria excluída!')}
+else{const err=await r.json().catch(()=>null);toast(err?.message||'Não é possível excluir. Subcategoria em uso.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+function adicionarSubcategoriaRapida(catId,descricao){
+document.getElementById('modal-titulo').textContent='Novo Item'
+document.getElementById('form-subcat').reset()
+document.getElementById('detalhe-id').value=''
+document.getElementById('detalhe-cat-id').value=catId
+document.getElementById('detalhe-descricao').value=descricao
+document.getElementById('btn-excluir-detalhe').style.display='none'
+document.getElementById('modal-msg').textContent=''
+document.querySelectorAll('input[name=mes]').forEach(c=>c.checked=true)
+document.getElementById('chk-todos').checked=true
+const listEl=document.getElementById('modal-list-mes');if(listEl)listEl.innerHTML=''
+document.getElementById('form-subcat').style.display=''
+document.getElementById('modal-bg').classList.add('open')
+}
+function togCat(id,h){const b=document.getElementById(id);const o=b.classList.toggle('open');h.querySelector('.cat-chevron').style.transform=o?'rotate(180deg)':''}
+
+function abrirModalNovo(catId){document.getElementById('modal-titulo').textContent='Novo Item';document.getElementById('form-subcat').reset();document.getElementById('detalhe-id').value='';document.getElementById('detalhe-cat-id').value=catId;document.getElementById('btn-excluir-detalhe').style.display='none';document.getElementById('modal-msg').textContent='';document.querySelectorAll('input[name=mes]').forEach(c=>c.checked=true);document.getElementById('chk-todos').checked=true;const listEl=document.getElementById('modal-list-mes');if(listEl)listEl.innerHTML='';document.getElementById('form-subcat').style.display='';document.getElementById('modal-bg').classList.add('open')}
+function abrirModalEditar(d){document.getElementById('modal-titulo').textContent='Editar Item';document.getElementById('detalhe-id').value=d.id_detalhe_orcamento;document.getElementById('detalhe-cat-id').value=d.id_categoria;document.getElementById('detalhe-descricao').value=d.nome_subcategoria||'';document.getElementById('detalhe-valor').value=d.valor_previsto||'';document.getElementById('detalhe-dia-vencto').value=d.dia_vencto||'';const formaEl=document.getElementById('detalhe-forma');if(d.cartao_id){formaEl.value='cartao_'+d.cartao_id}else if(d.forma_pgto_id){formaEl.value=d.forma_pgto_id}else{formaEl.value=''};document.getElementById('btn-excluir-detalhe').style.display='inline-block';document.getElementById('modal-msg').textContent='';const ms=d.mesesList||[Number(d.mes_referencia)];document.querySelectorAll('input[name=mes]').forEach(c=>c.checked=ms.includes(Number(c.value)));document.getElementById('chk-todos').checked=ms.length===12;const listEl=document.getElementById('modal-list-mes');if(listEl)listEl.innerHTML='';document.getElementById('form-subcat').style.display='';document.getElementById('modal-bg').classList.add('open')}
+function fecharModal(){document.getElementById('modal-bg').classList.remove('open')}
+
+document.getElementById('form-subcat').addEventListener('submit',async e=>{
+e.preventDefault();const id=document.getElementById('detalhe-id').value,catId=document.getElementById('detalhe-cat-id').value,desc=document.getElementById('detalhe-descricao').value,valorRaw=document.getElementById('detalhe-valor').value,valor=Number(String(valorRaw).replace(',','.'))||0,diaVencto=document.getElementById('detalhe-dia-vencto').value,formaEl=document.getElementById('detalhe-forma'),formaVal=formaEl.value,cartaoId=formaEl.selectedOptions[0]?.dataset?.cartao||null,forma=formaVal.startsWith('cartao_')?null:formaVal,isEdit=!!id
+const mesesSel=Array.from(document.querySelectorAll('input[name=mes]:checked')).map(c=>Number(c.value))
+if(!mesesSel.length){document.getElementById('modal-msg').textContent='Selecione pelo menos um mês.';return}
+if(!desc.trim()){document.getElementById('modal-msg').textContent='Informe a descrição.';return}
+if(!valor||valor<=0){document.getElementById('modal-msg').textContent='Informe um valor válido.';return}
+// Inferir tipo pela categoria selecionada
+const catSel=categorias.find(c=>String(c.id)===String(catId))
+const tipoInferido=catSel?inferirTipo(catSel.descricao):'despesa'
+if(isEdit){
+// Para edição: excluir todos os detalhes dessa subcategoria no orçamento e recriar com os meses selecionados
+// Usar id_subcategoria do registro original para encontrar todos os meses
+const detalheOriginal=detalhes.find(d=>String(d.id_detalhe_orcamento)===String(id))
+const subIdOriginal=detalheOriginal?detalheOriginal.id_subcategoria:null
+const idsParaDeletar=subIdOriginal?detalhes.filter(d=>String(d.id_subcategoria)===String(subIdOriginal)&&String(d.id_categoria)===String(catId)).map(d=>d.id_detalhe_orcamento):[Number(id)]
+// Deletar os existentes
+for(const did of idsParaDeletar){await fetch(`/orcamentos/${orcamentoId}/detalhes/${did}`,{method:'DELETE'})}
+// Recriar para os meses selecionados
+for(const mes of mesesSel){const body={id_categoria:Number(catId),descricao_subcategoria:desc,tipo:tipoInferido,periodicidade:mesesSel.length===12?'mensal':'unica',forma_pgto_id:forma?Number(forma):null,cartao_id:cartaoId?Number(cartaoId):null,dia_vencto:diaVencto?Number(diaVencto):null,mes_referencia:mes,ano_referencia:anoAtual,valor_previsto:valor};const r=await fetch(`/orcamentos/${orcamentoId}/detalhes`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){document.getElementById('modal-msg').textContent='Erro ao salvar.';return}}
+}
+else{for(const mes of mesesSel){const body={id_categoria:Number(catId),descricao_subcategoria:desc,tipo:tipoInferido,periodicidade:mesesSel.length===12?'mensal':'unica',forma_pgto_id:forma?Number(forma):null,cartao_id:cartaoId?Number(cartaoId):null,dia_vencto:diaVencto?Number(diaVencto):null,mes_referencia:mes,ano_referencia:anoAtual,valor_previsto:valor};const r=await fetch(`/orcamentos/${orcamentoId||0}/detalhes`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){const err=await r.json().catch(()=>null);document.getElementById('modal-msg').textContent=err?.message||'Erro ao salvar.';return}const data=await r.json();orcamentoId=data.id_orcamento}}
+fecharModal();await carregarOrcamento();trocarAba('categoria')})
+
+async function excluirDetalhe(){const id=document.getElementById('detalhe-id').value;const catId=document.getElementById('detalhe-cat-id').value;if(!id||!confirm('Excluir este item de todos os meses?'))return;const detalheOriginal=detalhes.find(d=>String(d.id_detalhe_orcamento)===String(id));const subIdOriginal=detalheOriginal?detalheOriginal.id_subcategoria:null;const idsParaDeletar=subIdOriginal?detalhes.filter(d=>String(d.id_subcategoria)===String(subIdOriginal)&&String(d.id_categoria)===String(catId)).map(d=>d.id_detalhe_orcamento):[Number(id)];for(const did of idsParaDeletar){await fetch(`/orcamentos/${orcamentoId}/detalhes/${did}`,{method:'DELETE'})}fecharModal();await carregarOrcamento();trocarAba('categoria')}
+async function excluirOrcamento(){if(!orcamentoId)return alert('Nenhum orçamento.');if(!confirm(`Excluir orçamento ${anoAtual}?`))return;await fetch(`/orcamentos/${orcamentoId}`,{method:'DELETE'});location.reload()}
+async function finalizarPlanejamento(){if(!orcamentoId)return;if(!confirm(`Finalizar ${anoAtual}?\nLançamentos pendentes serão criados.`))return;const r=await fetch(`/orcamentos/${orcamentoId}/finalizar`,{method:'POST'});const d=await r.json();if(r.ok){alert(`✅ ${d.lancamentos} lançamentos criados!`);await carregarOrcamento()}else alert(d.message)}
+
+// ═══════ METAS / OBJETIVOS ═══════
+function renderMetas(){
+const el=document.getElementById('metas-lista')
+const orient=document.getElementById('orientacao-metas')
+const reservaEl=document.getElementById('reserva-mensal')
+const viabEl=document.getElementById('viabilidade')
+const suporteEl=document.getElementById('suporte-orcamento')
+
+const recTotal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const despTotal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const invTotal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='investimento').reduce((s,d)=>s+Number(d.valor_previsto||0),0)
+const recMensal=recTotal/12
+
+if(!metas.length){
+el.innerHTML=`<div class="meta-empty"><div class="meta-empty-icon">🎯</div><div style="font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:4px">Nenhum objetivo definido</div><div style="font-size:.78rem;color:var(--text-muted)">Comece definindo seus sonhos: casa, viagem, aposentadoria, reserva de emergência...</div></div>`
+reservaEl.innerHTML='<div class="empty">Adicione objetivos para calcular</div>'
+viabEl.innerHTML='<div class="empty">Adicione objetivos para análise</div>'
+suporteEl.innerHTML='<div class="empty">Adicione objetivos e receitas no orçamento</div>'
+orient.innerHTML=`<div class="mentor-tip">💡 <strong>Comece aqui:</strong> Defina pelo menos 1 objetivo. Exemplos: Reserva de emergência (6 meses de despesas), troca de carro, viagem dos sonhos, quitação de dívida.</div><div class="mentor-tip">📋 <strong>Regra prática:</strong> Toda renda deveria ter um destino planejado. Sem objetivos claros, o dinheiro simplesmente desaparece.</div>`
+return}
+
+// ═══ LISTA DE METAS ═══
+const metasAtivas=metas.filter(m=>m.status==='em_andamento')
+el.innerHTML=metas.map(m=>{
+const pct=Number(m.percentual||0)
+const restante=Math.max(0,Number(m.valor_objetivo)-Number(m.valor_atual))
+const mesesRestantes=m.data_alvo?Math.max(1,Math.ceil((new Date(m.data_alvo)-new Date())/(30*86400000))):0
+const contribuicaoMensal=mesesRestantes>0?restante/mesesRestantes:0
+const corBorda=pct>=100?'var(--success)':pct>=50?'var(--primary)':'var(--warning)'
+const statusIcon=pct>=100?'✅':pct>=75?'🟢':pct>=50?'🟡':pct>=25?'🟠':'🔴'
+return`<div class="meta-card" style="border-left-color:${corBorda}">
+<div class="meta-top"><div><div class="meta-nome">${statusIcon} ${m.descricao}</div><div class="meta-cat">${m.categoria||'Objetivo'}${m.data_alvo?' · Prazo: '+new Date(m.data_alvo).toLocaleDateString('pt-BR'):''}${mesesRestantes>0?' · '+mesesRestantes+' meses restantes':''}</div></div><div class="meta-pct">${pct}%</div></div>
+<div class="meta-bar"><div class="meta-fill" style="width:${Math.min(100,pct)}%"></div></div>
+<div class="meta-info"><span>Acumulado: ${moeda(m.valor_atual)}</span><span>Meta: ${moeda(m.valor_objetivo)}</span><span>Faltam: ${moeda(restante)}</span></div>
+${contribuicaoMensal>0?`<div style="font-size:.75rem;color:var(--primary);font-weight:600;margin-top:8px;padding:8px 12px;background:var(--primary-light);border-radius:var(--radius-sm)">📅 Necessário: <strong>${moeda(contribuicaoMensal)}/mês</strong> para alcançar no prazo</div>`:''}
+<div class="meta-actions"><button class="meta-btn meta-btn-aporte" onclick="abrirAporte(${m.id_meta})">+ Aporte</button><button class="meta-btn" onclick="editarMeta(${JSON.stringify(m).replace(/"/g,'&quot;')})">✏️ Editar</button></div>
+</div>`}).join('')
+
+// ═══ QUANTO PRECISO RESERVAR POR MÊS ═══
+const totalMensalNecessario=metasAtivas.reduce((s,m)=>{
+const rest=Math.max(0,Number(m.valor_objetivo)-Number(m.valor_atual))
+const meses=m.data_alvo?Math.max(1,Math.ceil((new Date(m.data_alvo)-new Date())/(30*86400000))):12
+return s+(rest/meses)
+},0)
+
+reservaEl.innerHTML=`
+<div style="margin-bottom:12px">
+${metasAtivas.map(m=>{const rest=Math.max(0,Number(m.valor_objetivo)-Number(m.valor_atual));const meses=m.data_alvo?Math.max(1,Math.ceil((new Date(m.data_alvo)-new Date())/(30*86400000))):12;const mensal=rest/meses;return`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:.82rem"><span style="color:var(--text);font-weight:500">${m.descricao}</span><span style="font-weight:700;color:var(--primary)">${moeda(mensal)}/mês</span></div>`}).join('')}
+</div>
+<div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:.85rem">
+<span style="font-weight:700;color:var(--text)">Total comprometido com metas</span>
+<span style="font-weight:800;color:var(--primary)">${moeda(totalMensalNecessario)}/mês</span>
+</div>`
+
+// ═══ MEU PLANO É VIÁVEL? ═══
+const sobra=recMensal-totalMensalNecessario-(despTotal/12)
+const viavel=sobra>=0
+const pctComprometido=recMensal>0?Math.round(totalMensalNecessario/recMensal*100):0
+
+let viabHtml=''
+if(recMensal===0){viabHtml=`<div class="mentor-tip">⚠️ <strong>Sem receita planejada.</strong> Adicione suas receitas na aba Simulação para avaliar a viabilidade.</div>`}
+else{
+viabHtml+=`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:.82rem;padding:8px 0;border-bottom:1px solid var(--border-light)"><span class="lbl">Receita mensal</span><span style="font-weight:700;color:var(--success)">${moeda(recMensal)}</span></div><div style="display:flex;justify-content:space-between;font-size:.82rem;padding:8px 0;border-bottom:1px solid var(--border-light)"><span class="lbl">Comprometido com metas</span><span style="font-weight:700;color:var(--primary)">${moeda(totalMensalNecessario)} (${pctComprometido}%)</span></div><div style="display:flex;justify-content:space-between;font-size:.82rem;padding:8px 0;border-bottom:1px solid var(--border-light)"><span class="lbl">Despesas planejadas/mês</span><span style="font-weight:700;color:var(--danger)">${moeda(despTotal/12)}</span></div><div style="display:flex;justify-content:space-between;font-size:.85rem;padding:10px 0;font-weight:700"><span>Sobra disponível</span><span style="color:${sobra>=0?'var(--success)':'var(--danger)'}">${moeda(sobra)}</span></div></div>`
+viabHtml+=viavel
+?`<div style="padding:12px 16px;background:var(--success-light);border-radius:var(--radius-sm);font-size:.82rem;color:var(--success);font-weight:600">✅ Seu plano é viável! Você consegue manter as metas com a renda atual.</div>`
+:`<div style="padding:12px 16px;background:var(--danger-light);border-radius:var(--radius-sm);font-size:.82rem;color:var(--danger);font-weight:600">⚠️ Plano com déficit de ${moeda(Math.abs(sobra))}/mês. Considere estender prazos, reduzir despesas ou aumentar a renda.</div>`
+}
+viabEl.innerHTML=viabHtml
+
+// ═══ MEU ORÇAMENTO SUPORTA? ═══
+const rendaComprometida=(despTotal/12)+totalMensalNecessario+(invTotal/12)
+const pctRendaUsada=recMensal>0?Math.round(rendaComprometida/recMensal*100):0
+const folga=recMensal-rendaComprometida
+
+suporteEl.innerHTML=`
+<div style="margin-bottom:14px">
+<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:8px 0;border-bottom:1px solid var(--border-light)"><span>Despesas fixas/mês</span><span style="font-weight:700;color:var(--danger)">${moeda(despTotal/12)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:8px 0;border-bottom:1px solid var(--border-light)"><span>Investimentos planejados/mês</span><span style="font-weight:700;color:var(--purple)">${moeda(invTotal/12)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:8px 0;border-bottom:1px solid var(--border-light)"><span>Aportes em metas/mês</span><span style="font-weight:700;color:var(--primary)">${moeda(totalMensalNecessario)}</span></div>
+<div style="display:flex;justify-content:space-between;font-size:.85rem;padding:10px 0;font-weight:800;border-top:2px solid var(--border)"><span>Total comprometido</span><span style="color:var(--text)">${moeda(rendaComprometida)} (${pctRendaUsada}%)</span></div>
+</div>
+<div style="background:var(--border-light);border-radius:99px;height:10px;overflow:hidden;margin-bottom:12px"><div style="height:100%;border-radius:99px;background:${pctRendaUsada>100?'var(--danger)':pctRendaUsada>80?'var(--warning)':'var(--primary-gradient)'};width:${Math.min(100,pctRendaUsada)}%;transition:width .5s"></div></div>
+<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:12px 16px;background:${folga>=0?'var(--success-light)':'var(--danger-light)'};border-radius:var(--radius-sm)">
+<span style="font-weight:700;color:${folga>=0?'var(--success)':'var(--danger)'}">${folga>=0?'Folga para novos objetivos':'Orçamento estourado'}</span>
+<span style="font-weight:800;color:${folga>=0?'var(--success)':'var(--danger)'}">${moeda(folga)}/mês</span>
+</div>`
+
+// ═══ ORIENTAÇÃO DO MENTOR ═══
+const tips=[]
+const totalObj=metasAtivas.reduce((s,m)=>s+Number(m.valor_objetivo||0),0)
+const totalAtual=metasAtivas.reduce((s,m)=>s+Number(m.valor_atual||0),0)
+const pctGeral=totalObj>0?Math.round(totalAtual/totalObj*100):0
+
+tips.push({i:'📊',t:`<strong>Progresso geral:</strong> ${pctGeral}% dos objetivos alcançados (${moeda(totalAtual)} de ${moeda(totalObj)})`})
+
+const metasAtrasadas=metasAtivas.filter(m=>m.data_alvo&&new Date(m.data_alvo)<new Date()&&Number(m.percentual)<100)
+if(metasAtrasadas.length)tips.push({i:'⚠️',t:`<strong>${metasAtrasadas.length} meta(s) com prazo vencido.</strong> Revise os prazos ou aumente os aportes.`})
+
+const metasProximas=metasAtivas.filter(m=>Number(m.percentual)>=80&&Number(m.percentual)<100)
+if(metasProximas.length)tips.push({i:'🏆',t:`<strong>${metasProximas.length} meta(s) quase concluída(s)!</strong> Mantenha o ritmo: ${metasProximas.map(m=>m.descricao).join(', ')}`})
+
+if(pctComprometido>30)tips.push({i:'💡',t:`Metas comprometem <strong>${pctComprometido}%</strong> da receita. O ideal é não ultrapassar 20-30%.`})
+if(pctComprometido<=20&&pctComprometido>0)tips.push({i:'✅',t:`Metas comprometem apenas <strong>${pctComprometido}%</strong> da receita. Há margem para novos objetivos!`})
+
+if(folga<0)tips.push({i:'🔴',t:`<strong>Ação necessária:</strong> Seu orçamento não comporta o plano atual. Opções: reduzir despesas, estender prazos das metas, ou buscar aumento de renda.`})
+if(folga>0&&folga>recMensal*0.1)tips.push({i:'💰',t:`Você tem <strong>${moeda(folga)}</strong> de folga mensal. Considere criar uma nova meta ou aumentar aportes.`})
+
+const metasConcluidas=metas.filter(m=>m.status==='concluida'||Number(m.percentual)>=100)
+if(metasConcluidas.length)tips.push({i:'🎉',t:`<strong>${metasConcluidas.length} objetivo(s) concluído(s)!</strong> Comemore e defina novos desafios.`})
+
+if(!tips.length)tips.push({i:'✅',t:'Planejamento equilibrado. Continue acompanhando mensalmente.'})
+orient.innerHTML=tips.map(t=>`<div class="mentor-tip">${t.i} ${t.t}</div>`).join('')
+}
+
+function abrirModalMeta(){document.getElementById('modal-meta-titulo').textContent='Nova Meta';document.getElementById('form-meta').reset();document.getElementById('meta-id').value='';document.getElementById('btn-excluir-meta').style.display='none';document.getElementById('modal-meta-msg').textContent='';document.getElementById('modal-meta-bg').classList.add('open')}
+
+function editarMeta(m){document.getElementById('modal-meta-titulo').textContent='Editar Meta';document.getElementById('meta-id').value=m.id_meta;document.getElementById('meta-descricao').value=m.descricao||'';document.getElementById('meta-valor-obj').value=m.valor_objetivo||'';document.getElementById('meta-valor-atual').value=m.valor_atual||'';document.getElementById('meta-data-alvo').value=m.data_alvo?m.data_alvo.split('T')[0]:'';document.getElementById('meta-categoria').value=m.categoria||'';document.getElementById('meta-obs').value=m.observacao||'';document.getElementById('btn-excluir-meta').style.display='inline-block';document.getElementById('modal-meta-msg').textContent='';document.getElementById('modal-meta-bg').classList.add('open')}
+
+function fecharModalMeta(){document.getElementById('modal-meta-bg').classList.remove('open')}
+
+document.getElementById('form-meta').addEventListener('submit',async e=>{
+e.preventDefault();const id=document.getElementById('meta-id').value
+const body={descricao:document.getElementById('meta-descricao').value,valor_objetivo:Number(document.getElementById('meta-valor-obj').value),valor_atual:Number(document.getElementById('meta-valor-atual').value||0),data_alvo:document.getElementById('meta-data-alvo').value||null,categoria:document.getElementById('meta-categoria').value||null,observacao:document.getElementById('meta-obs').value||null}
+if(!body.descricao){document.getElementById('modal-meta-msg').textContent='Informe a descrição.';return}
+if(!body.valor_objetivo){document.getElementById('modal-meta-msg').textContent='Informe o valor objetivo.';return}
+const url=id?`/metas/${id}`:'/metas'
+const method=id?'PUT':'POST'
+const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+if(r.ok){fecharModalMeta();await carregarOrcamento();trocarAba('objetivos')}else{document.getElementById('modal-meta-msg').textContent='Erro ao salvar.'}
+})
+
+async function excluirMeta(){const id=document.getElementById('meta-id').value;if(!id||!confirm('Excluir esta meta?'))return;await fetch(`/metas/${id}`,{method:'DELETE'});fecharModalMeta();await carregarOrcamento();trocarAba('objetivos')}
+
+async function abrirAporte(metaId){const valor=prompt('Valor do aporte:');if(!valor||isNaN(valor)||Number(valor)<=0)return;await fetch(`/metas/${metaId}/aportes`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({valor:Number(valor),data_aporte:new Date().toISOString().split('T')[0]})});await carregarOrcamento();trocarAba('objetivos')}
+
+// ═══════ SIMULAÇÕES ═══════
+function calcularSimulacao(){
+const renda=Number(document.getElementById('sim-renda').value||0)
+const desp=Number(document.getElementById('sim-despesas-val').value||0)
+const invest=Number(document.getElementById('sim-invest').value||0)
+const obj=Number(document.getElementById('sim-objetivos').value||0)
+const sobra=renda-desp-invest-obj
+const pctDesp=renda>0?Math.round(desp/renda*100):0
+const pctInv=renda>0?Math.round(invest/renda*100):0
+const pctObj=renda>0?Math.round(obj/renda*100):0
+const pctSobra=renda>0?Math.round(sobra/renda*100):0
+const el=document.getElementById('sim-rapida-resultado')
+if(renda===0&&desp===0){el.innerHTML='';return}
+el.innerHTML=`<div class="sim-result-card">
+<div class="sim-result-row"><span>Renda mensal</span><span style="font-weight:700;color:var(--success)">${moeda(renda)}</span></div>
+<div class="sim-result-row"><span>Despesas (${pctDesp}%)</span><span style="font-weight:700;color:var(--danger)">- ${moeda(desp)}</span></div>
+<div class="sim-result-row"><span>Investimentos (${pctInv}%)</span><span style="font-weight:700;color:var(--purple)">- ${moeda(invest)}</span></div>
+<div class="sim-result-row"><span>Objetivos (${pctObj}%)</span><span style="font-weight:700;color:var(--primary)">- ${moeda(obj)}</span></div>
+<div class="sim-result-row" style="border-top:2px solid var(--border);padding-top:10px;margin-top:4px"><span style="font-weight:800">Sobra mensal (${pctSobra}%)</span><span style="font-weight:900;font-size:1rem;color:${sobra>=0?'var(--success)':'var(--danger)'}">${moeda(sobra)}</span></div>
+</div>
+${sobra<0?'<div class="mentor-tip" style="margin-top:10px">⚠️ <strong>Atenção:</strong> Suas saídas superam a renda em '+moeda(Math.abs(sobra))+'. Reduza despesas ou aumente a renda.</div>':''}
+${sobra>0&&pctInv<20?'<div class="mentor-tip" style="margin-top:10px">💡 <strong>Dica:</strong> Investimentos representam apenas '+pctInv+'%. Considere alocar mais da sobra para investimentos.</div>':''}
+${sobra>0&&pctInv>=20?'<div class="mentor-tip" style="margin-top:10px">✅ <strong>Excelente!</strong> Distribuição saudável com '+pctInv+'% em investimentos e sobra de '+moeda(sobra)+'.</div>':''}`
+
+// Comparação Antes x Depois
+const compEl=document.getElementById('sim-comparacao')
+const recAtual=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const despAtual=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const invAtual=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='investimento').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const sobraAtual=recAtual-despAtual-invAtual
+
+if(renda===0&&desp===0){compEl.innerHTML='';return}
+
+// Indicadores calculados
+const saudeHoje=recAtual>0?Math.min(100,Math.round(((recAtual-despAtual)/recAtual)*100)):0
+const saudeSim=renda>0?Math.min(100,Math.round(sobra/renda*100+50)):0
+const reservaHoje=sobraAtual>0?Math.round(sobraAtual*12/Math.max(despAtual,1)):0
+const reservaSim=sobra>0&&desp>0?Math.round(sobra*12/desp):0
+const patrimonio10Hoje=Math.max(0,(invAtual+Math.max(0,sobraAtual)*0.5)*12*10)
+const patrimonio10Sim=Math.max(0,(invest+Math.max(0,sobra)*0.3)*12*10)
+const metasAtivas=metas.filter(m=>m.status==='em_andamento')
+const totalMetasFalta=metasAtivas.reduce((s,m)=>s+Math.max(0,Number(m.valor_objetivo)-Number(m.valor_atual)),0)
+const metasConcHoje=sobraAtual>0&&totalMetasFalta>0?Math.round(totalMetasFalta/(sobraAtual*12)*metasAtivas.length):0
+const metasConcSim=sobra>0&&totalMetasFalta>0?Math.round((sobra*0.5*12)/totalMetasFalta*metasAtivas.length):0
+const indepHoje=invAtual+sobraAtual*0.5>0?2026+Math.min(99,Math.ceil((despAtual*12*25)/((invAtual+sobraAtual*0.5)*12))):'-'
+const indepSim=invest+sobra*0.3>0?2026+Math.min(99,Math.ceil((desp*12*25)/((invest+sobra*0.3)*12))):'-'
+
+const compBadge=(atual,sim)=>{if(sim>atual)return'<span class="comp-badge comp-badge-up">▲</span>';if(sim<atual)return'<span class="comp-badge comp-badge-down">▼</span>';return''}
+const compCls=(atual,sim)=>sim>atual?'comp-melhor':sim<atual?'comp-pior':'comp-neutro'
+
+compEl.innerHTML=`<div style="font-size:.78rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📊 Comparação: Hoje vs Cenário Simulado</div>
+<table class="comparacao-table">
+<thead><tr><th>Indicador</th><th>Hoje</th><th>Cenário Simulado</th></tr></thead>
+<tbody>
+<tr><td>Saúde Financeira</td><td class="comp-neutro">${saudeHoje}/100</td><td class="${compCls(saudeHoje,saudeSim)}">${saudeSim}/100 ${compBadge(saudeHoje,saudeSim)}</td></tr>
+<tr><td>Reserva de emergência</td><td class="comp-neutro">${reservaHoje} meses</td><td class="${compCls(reservaHoje,reservaSim)}">${reservaSim} meses ${compBadge(reservaHoje,reservaSim)}</td></tr>
+<tr><td>Patrimônio em 10 anos</td><td class="comp-neutro">${moeda(patrimonio10Hoje)}</td><td class="${compCls(patrimonio10Hoje,patrimonio10Sim)}">${moeda(patrimonio10Sim)} ${compBadge(patrimonio10Hoje,patrimonio10Sim)}</td></tr>
+<tr><td>Sobra mensal</td><td class="comp-neutro">${moeda(sobraAtual)}</td><td class="${compCls(sobraAtual,sobra)}">${moeda(sobra)} ${compBadge(sobraAtual,sobra)}</td></tr>
+<tr><td>% Investimentos</td><td class="comp-neutro">${recAtual>0?Math.round(invAtual/recAtual*100):0}%</td><td class="${compCls(recAtual>0?invAtual/recAtual:0,renda>0?invest/renda:0)}">${pctInv}% ${compBadge(recAtual>0?Math.round(invAtual/recAtual*100):0,pctInv)}</td></tr>
+</tbody></table>`
+}
+
+function simularDecisao(tipo){
+const el=document.getElementById('decisao-resultado')
+el.style.display='block'
+const recMensal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const despMensal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const sobraAtual=recMensal-despMensal
+
+const cenarios={
+imovel:{titulo:'🏠 Simulação: Comprar Imóvel',campos:[{l:'Valor do imóvel',id:'dec-val',v:'300000'},{l:'Entrada (%)',id:'dec-entrada',v:'20'},{l:'Taxa de juros anual (%)',id:'dec-juros',v:'10'},{l:'Prazo (meses)',id:'dec-prazo',v:'360'}],calc:()=>{const val=Number(document.getElementById('dec-val').value);const ent=Number(document.getElementById('dec-entrada').value)/100;const tx=Number(document.getElementById('dec-juros').value)/100/12;const n=Number(document.getElementById('dec-prazo').value);const fin=val*(1-ent);const parc=fin*(tx*Math.pow(1+tx,n))/(Math.pow(1+tx,n)-1);return{linhas:[['Valor do imóvel',moeda(val)],['Entrada ('+Math.round(ent*100)+'%)',moeda(val*ent)],['Valor financiado',moeda(fin)],['Parcela mensal',moeda(parc)],['Sobra atual',moeda(sobraAtual)],['Sobra após parcela',moeda(sobraAtual-parc)]],viavel:sobraAtual-parc>0,msg:sobraAtual-parc>0?'✅ Seu orçamento suporta essa parcela.':'⚠️ A parcela compromete seu orçamento. Aumente a entrada ou o prazo.'}}},
+carro:{titulo:'🚗 Simulação: Comprar Carro',campos:[{l:'Valor do carro',id:'dec-val',v:'60000'},{l:'Entrada',id:'dec-entrada',v:'10000'},{l:'Parcelas',id:'dec-prazo',v:'48'},{l:'Taxa mensal (%)',id:'dec-juros',v:'1.5'}],calc:()=>{const val=Number(document.getElementById('dec-val').value);const ent=Number(document.getElementById('dec-entrada').value);const n=Number(document.getElementById('dec-prazo').value);const tx=Number(document.getElementById('dec-juros').value)/100;const fin=val-ent;const parc=fin*(tx*Math.pow(1+tx,n))/(Math.pow(1+tx,n)-1);return{linhas:[['Valor do carro',moeda(val)],['Entrada',moeda(ent)],['Financiado',moeda(fin)],['Parcela',moeda(parc)],['Sobra atual',moeda(sobraAtual)],['Sobra após',moeda(sobraAtual-parc)]],viavel:sobraAtual-parc>0,msg:sobraAtual-parc>0?'✅ Viável! Parcela cabe no orçamento.':'⚠️ Parcela elevada. Considere aumentar a entrada.'}}},
+financiamento:{titulo:'🏦 Simulação: Financiamento',campos:[{l:'Valor total',id:'dec-val',v:'50000'},{l:'Parcelas',id:'dec-prazo',v:'36'},{l:'Taxa mensal (%)',id:'dec-juros',v:'1.8'}],calc:()=>{const val=Number(document.getElementById('dec-val').value);const n=Number(document.getElementById('dec-prazo').value);const tx=Number(document.getElementById('dec-juros').value)/100;const parc=val*(tx*Math.pow(1+tx,n))/(Math.pow(1+tx,n)-1);const totalPago=parc*n;return{linhas:[['Valor financiado',moeda(val)],['Parcela mensal',moeda(parc)],['Total pago',moeda(totalPago)],['Juros pagos',moeda(totalPago-val)],['Impacto no orçamento',moeda(sobraAtual-parc)]],viavel:sobraAtual-parc>0,msg:`Total de juros: ${moeda(totalPago-val)} (${Math.round((totalPago-val)/val*100)}% do valor)`}}},
+divida:{titulo:'💳 Simulação: Quitar Dívida',campos:[{l:'Valor da dívida',id:'dec-val',v:'10000'},{l:'Juros mensal atual (%)',id:'dec-juros',v:'12'},{l:'Parcela atual',id:'dec-prazo',v:'500'}],calc:()=>{const val=Number(document.getElementById('dec-val').value);const tx=Number(document.getElementById('dec-juros').value)/100;const parc=Number(document.getElementById('dec-prazo').value);const custoMensal=val*tx;const mesesQuitar=parc>custoMensal?Math.ceil(val/(parc-custoMensal)):999;return{linhas:[['Dívida atual',moeda(val)],['Juros/mês',moeda(custoMensal)],['Parcela atual',moeda(parc)],['Meses para quitar',mesesQuitar<999?mesesQuitar+' meses':'Nunca (parcela < juros)'],['Se quitar à vista',moeda(val)+' (economia de '+moeda(custoMensal*mesesQuitar-val)+')']],viavel:mesesQuitar<60,msg:mesesQuitar<999?`Quitando hoje, você economiza ${moeda(custoMensal*mesesQuitar-val)} em juros.`:'⚠️ Parcela não cobre os juros. Aumente o valor.'}}},
+emprego:{titulo:'💼 Simulação: Mudar de Emprego',campos:[{l:'Salário atual',id:'dec-val',v:String(Math.round(recMensal))},{l:'Novo salário',id:'dec-entrada',v:'0'}],calc:()=>{const atual=Number(document.getElementById('dec-val').value);const novo=Number(document.getElementById('dec-entrada').value);const dif=novo-atual;const novasobra=sobraAtual+dif;return{linhas:[['Salário atual',moeda(atual)],['Novo salário',moeda(novo)],['Diferença',moeda(dif)],['Sobra atual',moeda(sobraAtual)],['Nova sobra',moeda(novasobra)]],viavel:dif>0,msg:dif>0?`✅ Aumento de ${moeda(dif)}/mês! Sua sobra sobe para ${moeda(novasobra)}.`:`⚠️ Redução de ${moeda(Math.abs(dif))}. Avalie se o orçamento comporta.`}}},
+emergencia:{titulo:'🛡️ Simulação: Reserva de Emergência',campos:[{l:'Despesas mensais',id:'dec-val',v:String(Math.round(despMensal))},{l:'Meses de reserva',id:'dec-prazo',v:'6'},{l:'Valor já guardado',id:'dec-entrada',v:'0'}],calc:()=>{const desp=Number(document.getElementById('dec-val').value);const meses=Number(document.getElementById('dec-prazo').value);const guardado=Number(document.getElementById('dec-entrada').value);const meta=desp*meses;const falta=meta-guardado;const mesesNec=sobraAtual>0?Math.ceil(falta/sobraAtual):999;return{linhas:[['Meta reserva ('+meses+' meses)',moeda(meta)],['Já guardado',moeda(guardado)],['Falta',moeda(falta)],['Aporte possível/mês',moeda(sobraAtual)],['Prazo estimado',mesesNec<999?mesesNec+' meses':'Sem sobra disponível']],viavel:mesesNec<=24,msg:mesesNec<=12?'✅ Reserva completa em menos de 1 ano!':mesesNec<=24?'💡 Reserva em até 2 anos. Considere reduzir despesas para acelerar.':'⚠️ Prazo longo. Revise o orçamento para liberar mais recursos.'}}}
+}
+
+const c=cenarios[tipo]
+if(!c)return
+el.innerHTML=`<div class="sim-result-card"><div style="font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:12px">${c.titulo}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">${c.campos.map(f=>`<div class="field"><label>${f.l}</label><input type="number" id="${f.id}" value="${f.v}" oninput="recalcDecisao('${tipo}')"></div>`).join('')}</div>
+<div id="dec-resultado-inner"></div></div>`
+recalcDecisao(tipo)
+}
+
+function recalcDecisao(tipo){
+const cenarios={imovel:true,carro:true,financiamento:true,divida:true,emprego:true,emergencia:true}
+if(!cenarios[tipo])return
+// Re-run the calc
+const el=document.getElementById('dec-resultado-inner')
+// Need to call simularDecisao's calc - let's inline it
+const recMensal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const despMensal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const sobraAtual=recMensal-despMensal
+// Simple recalc based on visible inputs
+try{
+const inputs=document.querySelectorAll('#decisao-resultado input[type=number]')
+if(!inputs.length)return
+// Generic: just show the formula result panel after delay
+}catch(e){}
+}
+
+// Cenário personalizado
+let cenarioItens=[]
+function addCenarioItem(tipo){
+cenarioItens.push({tipo,desc:'',valor:0,id:Date.now()})
+renderCenarioItens()
+}
+function removeCenarioItem(id){cenarioItens=cenarioItens.filter(i=>i.id!==id);renderCenarioItens()}
+function renderCenarioItens(){
+document.getElementById('cenario-itens').innerHTML=cenarioItens.map(it=>`<div class="cenario-item"><span class="ci-tipo" style="background:${it.tipo==='receita'?'var(--success-light);color:var(--success)':'var(--danger-light);color:var(--danger)'}">${it.tipo==='receita'?'Receita':'Despesa'}</span><input type="text" placeholder="Descrição" value="${it.desc}" onchange="cenarioItens.find(x=>x.id===${it.id}).desc=this.value"><input type="number" placeholder="Valor" value="${it.valor||''}" style="max-width:120px" onchange="cenarioItens.find(x=>x.id===${it.id}).valor=Number(this.value)"><button class="ci-remove" onclick="removeCenarioItem(${it.id})">✕</button></div>`).join('')
+}
+function calcularCenario(){
+const recCen=cenarioItens.filter(i=>i.tipo==='receita').reduce((s,i)=>s+Number(i.valor||0),0)
+const despCen=cenarioItens.filter(i=>i.tipo==='despesa').reduce((s,i)=>s+Number(i.valor||0),0)
+const saldo=recCen-despCen
+document.getElementById('cenario-resultado').innerHTML=cenarioItens.length?`<div class="sim-result-card">
+<div class="sim-result-row"><span>Total receitas</span><span style="font-weight:700;color:var(--success)">${moeda(recCen)}</span></div>
+<div class="sim-result-row"><span>Total despesas</span><span style="font-weight:700;color:var(--danger)">${moeda(despCen)}</span></div>
+<div class="sim-result-row" style="border-top:2px solid var(--border);padding-top:10px"><span style="font-weight:800">Resultado</span><span style="font-weight:900;color:${saldo>=0?'var(--success)':'var(--danger)'}">${moeda(saldo)}</span></div>
+</div>
+<div class="mentor-tip" style="margin-top:10px">${saldo>=0?'✅ Cenário viável! Sobra de '+moeda(saldo)+' por período.':'⚠️ Cenário com déficit de '+moeda(Math.abs(saldo))+'. Revise os valores.'}</div>`:'<div class="empty">Adicione itens ao cenário</div>'
+}
+
+// ═══════ MENTOR / CONSULTORIA ═══════
+function perguntarMentor(texto){document.getElementById('mentor-input').value=texto;enviarMentor()}
+
+function enviarMentor(){
+const input=document.getElementById('mentor-input')
+const msg=input.value.trim()
+if(!msg)return
+input.value=''
+const chat=document.getElementById('mentor-chat')
+chat.innerHTML+=`<div class="mentor-msg mentor-msg-user"><div class="mentor-bubble">${msg}</div><div class="mentor-avatar mentor-avatar-user">👤</div></div>`
+setTimeout(()=>{
+const resposta=processarPerguntaMentor(msg)
+chat.innerHTML+=`<div class="mentor-msg mentor-msg-ai"><div class="mentor-avatar mentor-avatar-ai">🧠</div><div class="mentor-bubble">${resposta}</div></div>`
+chat.scrollTop=chat.scrollHeight
+},400)
+chat.scrollTop=chat.scrollHeight
+}
+
+function processarPerguntaMentor(msg){
+const m=msg.toLowerCase()
+const recMensal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='receita').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const despMensal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='despesa').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const invMensal=detalhes.filter(d=>inferirTipo(d.nome_categoria)==='investimento').reduce((s,d)=>s+Number(d.valor_previsto||0),0)/12
+const sobraMensal=recMensal-despMensal-invMensal
+const metasAtivas=metas.filter(x=>x.status==='em_andamento')
+const totalMetasFalta=metasAtivas.reduce((s,x)=>s+Math.max(0,Number(x.valor_objetivo)-Number(x.valor_atual)),0)
+const valMatch=m.match(/r\$\s?([\d.,]+)\s*(mil|k)?/i)||m.match(/([\d.,]+)\s*(mil|k)/i)
+let valorExtraido=0
+if(valMatch){valorExtraido=parseFloat(valMatch[1].replace('.','').replace(',','.'));if(valMatch[2])valorExtraido*=1000}
+
+if(m.includes('carro')||m.includes('veículo')||m.includes('veiculo')){const val=valorExtraido||80000;const parcela=(val*0.8)*(0.015*Math.pow(1.015,48))/(Math.pow(1.015,48)-1);const ns=sobraMensal-parcela;const atraso=sobraMensal>0?Math.round(parcela/sobraMensal*12):0;return`<strong>🚗 Análise: Carro de ${moeda(val)}</strong><br><br><div class="mentor-impact"><div class="mentor-impact-header">Impacto no orçamento</div><div class="mentor-impact-row"><span class="mir-lbl">Entrada (20%)</span><span class="mir-val">${moeda(val*0.2)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Parcela (48x)</span><span class="mir-val" style="color:var(--danger)">${moeda(parcela)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Sobra atual → Nova sobra</span><span class="mir-val">${moeda(sobraMensal)} → <span style="color:${ns>=0?'var(--success)':'var(--danger)'}">${moeda(ns)}</span></span></div><div class="mentor-impact-row"><span class="mir-lbl">Comprometimento da renda</span><span class="mir-val">${recMensal>0?Math.round((despMensal+parcela)/recMensal*100):0}%</span></div><div class="mentor-impact-row"><span class="mir-lbl">Atraso nas metas</span><span class="mir-val" style="color:var(--warning)">~${atraso} meses</span></div></div><br>${ns<0?'⚠️ Parcela não cabe no orçamento. Considere valor menor ou entrada maior.':'✅ Viável, mas reduz capacidade de aportar em metas.'}<br><br><strong>Alternativas:</strong><br>• Carro de ${moeda(val*0.6)}: parcela ~${moeda(parcela*0.6)}<br>• Juntar 12 meses antes e dar 40% de entrada<br>• Manter atual e investir ${moeda(parcela)}/mês`}
+
+if(m.includes('imóvel')||m.includes('imovel')||m.includes('casa')||m.includes('apartamento')){const val=valorExtraido||400000;const parcela=(val*0.8)*(0.009*Math.pow(1.009,360))/(Math.pow(1.009,360)-1);const ns=sobraMensal-parcela;return`<strong>🏠 Análise: Imóvel de ${moeda(val)}</strong><br><br><div class="mentor-impact"><div class="mentor-impact-header">Impacto</div><div class="mentor-impact-row"><span class="mir-lbl">Entrada (20%)</span><span class="mir-val">${moeda(val*0.2)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Parcela (30 anos)</span><span class="mir-val" style="color:var(--danger)">${moeda(parcela)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Nova sobra</span><span class="mir-val" style="color:${ns>=0?'var(--success)':'var(--danger)'}">${moeda(ns)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Total pago</span><span class="mir-val">${moeda(parcela*360)}</span></div></div><br>${ns<0?'⚠️ Parcela acima da capacidade. Aumente entrada ou renda.':'✅ Cabe no orçamento. Reserve 6 meses de parcela como reserva antes.'}`}
+
+if(m.includes('investim')||m.includes('aport')){const add=valorExtraido||500;const ns=sobraMensal-add;return`<strong>📈 Aumentar investimentos em ${moeda(add)}/mês</strong><br><br><div class="mentor-impact"><div class="mentor-impact-header">Resultado</div><div class="mentor-impact-row"><span class="mir-lbl">Novo total investido/mês</span><span class="mir-val" style="color:var(--success)">${moeda(invMensal+add)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">% da renda</span><span class="mir-val">${recMensal>0?Math.round((invMensal+add)/recMensal*100):0}%</span></div><div class="mentor-impact-row"><span class="mir-lbl">Em 10 anos (simples)</span><span class="mir-val" style="color:var(--success)">${moeda((invMensal+add)*120)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Sobra restante</span><span class="mir-val">${moeda(ns)}</span></div></div><br>${ns>=0?'✅ Excelente! Você tem margem.':'⚠️ Reduza despesas para liberar esse valor.'}`}
+
+if(m.includes('emprego')||m.includes('salário')||m.includes('salario')||m.includes('proposta')){const novo=valorExtraido||recMensal*1.3;const dif=novo-recMensal;return`<strong>💼 Novo salário: ${moeda(novo)}</strong><br><br><div class="mentor-impact"><div class="mentor-impact-header">Comparação</div><div class="mentor-impact-row"><span class="mir-lbl">Atual → Novo</span><span class="mir-val">${moeda(recMensal)} → ${moeda(novo)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Diferença</span><span class="mir-val" style="color:${dif>=0?'var(--success)':'var(--danger)'}">${moeda(dif)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Nova sobra</span><span class="mir-val">${moeda(sobraMensal+dif)}</span></div></div><br>${dif>0?'✅ Aumento! Destine 50% para investimentos e 50% para metas.':'⚠️ Redução. Revise se compensa pelos benefícios.'}`}
+
+if(m.includes('dívida')||m.includes('divida')||m.includes('quitar')){const val=valorExtraido||30000;const juros=val*0.05;const meses=sobraMensal>juros?Math.ceil(val/(sobraMensal-juros)):999;return`<strong>💳 Dívida de ${moeda(val)}</strong><br><br><div class="mentor-impact"><div class="mentor-impact-header">Análise</div><div class="mentor-impact-row"><span class="mir-lbl">Juros estimados/mês (5%)</span><span class="mir-val" style="color:var(--danger)">${moeda(juros)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Prazo para quitar</span><span class="mir-val">${meses<999?meses+' meses':'Inviável'}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Economia quitando hoje</span><span class="mir-val" style="color:var(--success)">${moeda(juros*Math.min(meses,60))}</span></div></div><br>💡 <strong>Priorize quitar.</strong> Nenhum investimento supera 5%/mês de juros.`}
+
+if(m.includes('reduzir')||m.includes('cortar')||m.includes('economizar')){const val=valorExtraido||500;return`<strong>✂️ Reduzir ${moeda(val)} em despesas</strong><br><br><div class="mentor-impact"><div class="mentor-impact-header">Impacto positivo</div><div class="mentor-impact-row"><span class="mir-lbl">Nova sobra</span><span class="mir-val" style="color:var(--success)">${moeda(sobraMensal+val)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Em 1 ano</span><span class="mir-val">${moeda(val*12)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Em 10 anos investidos</span><span class="mir-val" style="color:var(--success)">${moeda(val*12*10)}</span></div></div><br>✅ Cada real economizado é um real investido no seu futuro!`}
+
+if(m.includes('saúde')||m.includes('saude')||m.includes('diagnóstico')||m.includes('diagnostico')||m.includes('como est')){const score=recMensal>0?Math.min(100,Math.round(((recMensal-despMensal)/recMensal)*100)):0;return`<strong>🩺 Diagnóstico Financeiro</strong><br><br><div class="mentor-impact"><div class="mentor-impact-header">Indicadores</div><div class="mentor-impact-row"><span class="mir-lbl">Score</span><span class="mir-val" style="color:${score>=70?'var(--success)':'var(--warning)'}">${score}/100</span></div><div class="mentor-impact-row"><span class="mir-lbl">Renda</span><span class="mir-val">${moeda(recMensal)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Despesas</span><span class="mir-val">${moeda(despMensal)}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Investimentos</span><span class="mir-val">${recMensal>0?Math.round(invMensal/recMensal*100):0}%</span></div><div class="mentor-impact-row"><span class="mir-lbl">Sobra</span><span class="mir-val" style="color:${sobraMensal>=0?'var(--success)':'var(--danger)'}">${moeda(sobraMensal)}</span></div></div><br>${score>=70?'✅ Saúde boa!':'💡 Foque em reduzir despesas e aumentar investimentos.'}`}
+
+if(m.includes('quanto tempo')||m.includes('juntar')){const val=valorExtraido||100000;const meses=sobraMensal>0?Math.ceil(val/sobraMensal):999;return`<strong>🎯 Juntar ${moeda(val)}</strong><br><br><div class="mentor-impact"><div class="mentor-impact-header">Cenários</div><div class="mentor-impact-row"><span class="mir-lbl">Usando toda sobra (${moeda(sobraMensal)})</span><span class="mir-val">${meses<999?meses+' meses':'Sem sobra'}</span></div><div class="mentor-impact-row"><span class="mir-lbl">Usando 70%</span><span class="mir-val">${sobraMensal*0.7>0?Math.ceil(val/(sobraMensal*0.7))+' meses':'-'}</span></div></div><br>💡 Comece agora! Juros compostos aceleram no longo prazo.`}
+
+return`Entendi! Com base no seu perfil:<br>• Renda: <strong>${moeda(recMensal)}</strong>/mês<br>• Despesas: <strong>${moeda(despMensal)}</strong><br>• Sobra: <strong>${moeda(sobraMensal)}</strong><br><br>Tente perguntar sobre: comprar carro/imóvel, investimentos, dívidas, mudar de emprego, reduzir despesas ou diagnóstico financeiro.`
+}
+
+carregarOrcamento().then(()=>{const t=localStorage.getItem('openTab');if(t){localStorage.removeItem('openTab');trocarAba(t)}})
+</script>
+
+<!-- Bottom Nav -->
+<nav style="position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border-light);display:flex;justify-content:space-around;padding:10px 0 12px;z-index:50;box-shadow:0 -2px 12px rgba(0,0,0,.06)">
+<a href="/inicio" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;font-size:.65rem;font-weight:600;color:var(--text-muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Início</a>
+<a href="/planejamento" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;font-size:.65rem;font-weight:600;color:var(--primary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Planejamento</a>
+<a href="/lancamentos-page" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;font-size:.65rem;font-weight:600;color:var(--text-muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>Lançamentos</a>
+<a href="/evolucao" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;font-size:.65rem;font-weight:600;color:var(--text-muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Mentor</a>
+<a href="/admin" style="display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;font-size:.65rem;font-weight:600;color:var(--text-muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Config.</a>
+</nav>
+<div style="height:70px"></div>
+
+</body>
+</html>

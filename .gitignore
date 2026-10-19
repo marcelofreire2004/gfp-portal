@@ -1,0 +1,20 @@
+# Dependências (caso um build seja adicionado no futuro)
+node_modules/
+
+# Artefatos de build (fase futura, se migrar para React/Vite)
+dist/
+build/
+.vite/
+
+# Ambiente e segredos — nunca versionar
+.env
+.env.*
+!.env.example
+*.secret
+
+# Sistema operacional / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

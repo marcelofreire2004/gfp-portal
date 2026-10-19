@@ -1,0 +1,1091 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compromissos Financeiros</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared-layout.css">
+<style>
+.fatura-card{background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius);padding:16px;margin-bottom:10px;cursor:pointer;transition:all .15s}
+.fatura-card:hover{box-shadow:var(--shadow-sm);transform:translateY(-2px)}
+.fatura-header{display:flex;justify-content:space-between;align-items:center}
+.fatura-nome{font-size:.88rem;font-weight:700;color:var(--text)}
+.fatura-valor{font-size:1rem;font-weight:800;color:var(--danger)}
+.fatura-meta{font-size:.72rem;color:var(--text-muted);margin-top:4px}
+.fatura-total{padding:14px;background:var(--surface-hover);border-radius:var(--radius);margin-top:12px;display:flex;justify-content:space-between;font-size:.88rem;font-weight:700}
+.saude-cartao{background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.saude-cartao-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.saude-cartao-nome{font-size:.82rem;font-weight:700;color:var(--text)}
+.saude-cartao-bar{background:var(--border-light);border-radius:99px;height:5px;overflow:hidden;margin-top:6px}
+.saude-cartao-fill{height:100%;border-radius:99px;transition:width .4s}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-xl);width:92%;max-width:580px;max-height:85vh;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.25);display:flex;flex-direction:column}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border-light)}
+.modal-head h3{font-size:1rem;font-weight:800}
+.modal-x{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);padding:4px 8px;border-radius:var(--radius-sm)}
+.modal-x:hover{background:var(--surface-hover)}
+.modal-body{padding:16px 24px;overflow-y:auto;flex:1;max-height:60vh}
+.modal-foot{padding:14px 24px;border-top:1px solid var(--border-light);display:flex;gap:8px;justify-content:flex-end}
+.modal-foot .btn{padding:10px 20px;border:none;border-radius:var(--radius-sm);font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.modal-foot .btn-primary{background:var(--primary);color:#fff}
+.modal-foot .btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text-secondary)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:14px 28px;border-radius:var(--radius);font-size:.85rem;font-weight:600;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<script src="/shared-layout.js"></script>
+
+<!-- PAGE HERO -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+        <div id="hero-month" style="font-size:1.3rem;font-weight:900;color:var(--text)"></div>
+        <div id="hero-greeting" style="font-size:.82rem;color:var(--text-muted);margin-top:2px"></div>
+        <div style="font-size:.82rem;color:var(--text-secondary);margin-top:4px">Total: <strong id="hero-total" style="color:var(--text)">R$ 0</strong> · Pago: <strong id="hero-pago" style="color:var(--success)">R$ 0</strong> · Pendente: <strong id="hero-pendente" style="color:var(--danger)">R$ 0</strong></div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+            <button onclick="mudarMes(-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text);font-family:inherit">◀</button>
+            <button onclick="irParaHoje()" style="background:var(--primary-light);border:1px solid var(--primary);border-radius:var(--radius-sm);padding:7px 12px;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--primary);font-family:inherit">Hoje</button>
+            <button onclick="mudarMes(1)" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text);font-family:inherit">▶</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:.68rem;font-weight:600;color:var(--text-muted)">Data ref.:</label>
+            <input type="date" id="data-referencia" style="padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.78rem;font-family:inherit;color:var(--text);outline:none" onchange="document.getElementById('nc-data')&&(document.getElementById('nc-data').value=this.value)">
+        </div>
+    </div>
+</div>
+
+<!-- Filtro -->
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+    <input type="text" id="filtro-busca" placeholder="Buscar..." oninput="aplicarFiltro()" style="flex:1;min-width:200px;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none">
+    <div style="display:flex;gap:6px">
+        <button class="filtro-btn active" onclick="setFiltroStatus('todos')" data-filtro="todos" style="padding:7px 14px;border-radius:99px;border:1.5px solid var(--primary);background:var(--primary);color:#fff;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit">Todos</button>
+        <button class="filtro-btn" onclick="setFiltroStatus('pago')" data-filtro="pago" style="padding:7px 14px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-secondary);font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit">Pagos</button>
+        <button class="filtro-btn" onclick="setFiltroStatus('pendente')" data-filtro="pendente" style="padding:7px 14px;border-radius:99px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-secondary);font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit">Pendentes</button>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+    <div>
+        <div style="font-size:.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:12px">💳 Formas de Pagamento</div>
+        <div id="faturas-list"></div>
+    </div>
+    <div>
+        <div style="font-size:.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:12px">📅 Compromissos Futuros</div>
+        <div id="saude-cartoes"></div>
+        <!-- Diagnóstico -->
+        <div style="margin-top:16px">
+            <div style="font-size:.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:12px">🤖 Diagnóstico</div>
+            <div id="diagnostico-card" style="background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius);padding:16px"></div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)fecharModal()">
+    <div class="modal">
+        <div class="modal-head"><h3 id="modal-titulo">Fatura</h3><button class="modal-x" onclick="fecharModal()">&times;</button></div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-foot" id="modal-foot"></div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const moeda=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
+const fmtData=d=>{if(!d)return'—';if(typeof d==='string'){const p=d.split('T')[0];return new Date(p+'T12:00:00').toLocaleDateString('pt-BR')}return new Date(d).toLocaleDateString('pt-BR')}
+const toast=m=>{const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500)}
+const M=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+
+function formatarValorMonetario(input){
+// Permite entrada livre com vírgula como separador decimal
+let v=input.value
+// Remove caracteres inválidos (mantém dígitos, vírgula e ponto)
+v=v.replace(/[^\d,\.]/g,'')
+// Se tem ponto como milhar, remove
+if(v.includes('.')&&v.includes(','))v=v.replace(/\./g,'')
+input.value=v
+}
+function parseValorMonetario(str){
+if(!str)return 0
+// Remove pontos de milhar e troca vírgula por ponto
+return Number(str.replace(/\./g,'').replace(',','.'))||0
+}
+
+let cartoes=[],vencimentosCartao=[],vencimentosProxMes=[],contas=[],lancamentosMes=[]
+let anoAtual=new Date().getFullYear(),mesAtual=new Date().getMonth()+1
+
+// Header
+const usr=JSON.parse(localStorage.getItem('usuario')||'{}'),nome=usr.nome||'Usuário'
+const hora=new Date().getHours(),saudacao=hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite'
+document.getElementById('hero-greeting').textContent=`${saudacao}, ${nome}.`
+
+function updNav(){document.getElementById('hero-month').textContent=`${M[mesAtual-1]} ${anoAtual}`;const dr=document.getElementById('data-referencia');if(dr&&!dr.value){const h=new Date();dr.value=`${h.getFullYear()}-${String(h.getMonth()+1).padStart(2,'0')}-${String(h.getDate()).padStart(2,'0')}`}}
+
+// Feriados nacionais brasileiros (fixos + cálculo de Páscoa para móveis)
+function feriadosBrasil(ano){
+const feriados=[]
+// Fixos
+feriados.push(`${ano}-01-01`) // Confraternização Universal
+feriados.push(`${ano}-04-21`) // Tiradentes
+feriados.push(`${ano}-05-01`) // Dia do Trabalho
+feriados.push(`${ano}-09-07`) // Independência
+feriados.push(`${ano}-10-12`) // Nossa Sra Aparecida
+feriados.push(`${ano}-11-02`) // Finados
+feriados.push(`${ano}-11-15`) // Proclamação da República
+feriados.push(`${ano}-12-25`) // Natal
+// Páscoa (Meeus/Jones/Butcher)
+const a=ano%19,b=Math.floor(ano/100),c=ano%100,d=Math.floor(b/4),e=b%4
+const f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30
+const i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7
+const m=Math.floor((a+11*h+22*l)/451),mesPascoa=Math.floor((h+l-7*m+114)/31),diaPascoa=((h+l-7*m+114)%31)+1
+const pascoa=new Date(ano,mesPascoa-1,diaPascoa)
+// Carnaval (47 dias antes da Páscoa)
+const carnaval=new Date(pascoa);carnaval.setDate(carnaval.getDate()-47)
+feriados.push(carnaval.toISOString().split('T')[0])
+const carnaval2=new Date(pascoa);carnaval2.setDate(carnaval2.getDate()-48)
+feriados.push(carnaval2.toISOString().split('T')[0])
+// Sexta-feira Santa (2 dias antes da Páscoa)
+const sextaSanta=new Date(pascoa);sextaSanta.setDate(sextaSanta.getDate()-2)
+feriados.push(sextaSanta.toISOString().split('T')[0])
+// Corpus Christi (60 dias após Páscoa)
+const corpus=new Date(pascoa);corpus.setDate(corpus.getDate()+60)
+feriados.push(corpus.toISOString().split('T')[0])
+return feriados
+}
+
+function isFeriado(data){
+const ano=data.getFullYear()
+const str=`${ano}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`
+return feriadosBrasil(ano).includes(str)
+}
+
+function isFimDeSemana(data){const dow=data.getDay();return dow===0||dow===6}
+
+function proximoDiaUtil(data){
+const d=new Date(data)
+while(isFimDeSemana(d)||isFeriado(d)){d.setDate(d.getDate()+1)}
+return d
+}
+
+function mudarMes(d){mesAtual+=d;if(mesAtual>12){mesAtual=1;anoAtual++}if(mesAtual<1){mesAtual=12;anoAtual--}updNav();load()}
+function irParaHoje(){anoAtual=new Date().getFullYear();mesAtual=new Date().getMonth()+1;updNav();const dr=document.getElementById('data-referencia');if(dr){const h=new Date();dr.value=`${h.getFullYear()}-${String(h.getMonth()+1).padStart(2,'0')}-${String(h.getDate()).padStart(2,'0')}`}load()}
+
+async function load(){
+try{
+const proxMesNum=mesAtual<12?mesAtual+1:1
+const proxAnoNum=mesAtual<12?anoAtual:anoAtual+1
+const[rca,rv,rco,rl,rvp,rfp]=await Promise.all([fetch('/cartoes'),fetch(`/cartoes/vencimentos?ano=${anoAtual}&mes=${mesAtual}`),fetch('/contas'),fetch(`/lancamentos?ano=${anoAtual}&mes=${mesAtual}`),fetch(`/cartoes/vencimentos?ano=${proxAnoNum}&mes=${proxMesNum}`),fetch('/formas-pagamento')])
+cartoes=await rca.json();vencimentosCartao=await rv.json()
+try{contas=await rco.json()}catch(e){contas=[]}
+try{lancamentosMes=await rl.json()}catch(e){lancamentosMes=[]}
+try{vencimentosProxMes=await rvp.json()}catch(e){vencimentosProxMes=[]}
+try{window._formasPgtoCache=await rfp.json()}catch(e){window._formasPgtoCache=[]}
+// Recalcular valor_fatura de todos os cartões (garante consistência)
+await Promise.all(cartoes.map(c=>fetch(`/cartoes/${c.id}/recalcular`,{method:'POST'}).catch(()=>{})))
+// Recarregar vencimentos após recálculo
+try{const rv2=await fetch(`/cartoes/vencimentos?ano=${anoAtual}&mes=${mesAtual}`);vencimentosCartao=await rv2.json()}catch(e){}
+try{const rvp2=await fetch(`/cartoes/vencimentos?ano=${proxAnoNum}&mes=${proxMesNum}`);vencimentosProxMes=await rvp2.json()}catch(e){}
+// Totais: pago e pendente
+const totalPendenteCartao=vencimentosCartao.filter(v=>Number(v.valor_fatura)>0&&v.status!=='pago').reduce((s,v)=>s+Number(v.valor_fatura||0),0)
+const totalPagoCartao=vencimentosCartao.filter(v=>Number(v.valor_fatura)>0&&v.status==='pago').reduce((s,v)=>s+Number(v.valor_fatura||0),0)
+const lancNaoCartao=lancamentosMes.filter(l=>!l.cartao_id&&l.tipo==='despesa')
+const totalPendenteOutros=lancNaoCartao.filter(l=>l.status!=='pago').reduce((s,l)=>s+Number(l.valor||0),0)
+const totalPagoOutros=lancNaoCartao.filter(l=>l.status==='pago').reduce((s,l)=>s+Number(l.valor||0),0)
+const totalPago=totalPagoCartao+totalPagoOutros
+const totalPendente=totalPendenteCartao+totalPendenteOutros
+document.getElementById('hero-total').textContent=moeda(totalPago+totalPendente)
+document.getElementById('hero-pago').textContent=moeda(totalPago)
+document.getElementById('hero-pendente').textContent=moeda(totalPendente)
+renderFaturas();renderSaudeCartoes();renderDiagnostico()
+}catch(e){console.error(e)}
+}
+
+function renderFaturas(){
+const el=document.getElementById('faturas-list')
+const vc=vencimentosCartao.filter(v=>Number(v.valor_fatura)>0)
+window._fatVencIds=window._fatVencIds||{}
+window._fatLancIds=window._fatLancIds||{}
+
+// Consolidar cartões — fatura atual do mês selecionado
+const porCartao={}
+vc.forEach(v=>{
+const cid=v.id_cartao_credito
+if(!porCartao[cid])porCartao[cid]={total:0,vencIds:[],nome:'',dataVenc:null,status:'pago',cartaoId:cid,tipo:'cartao'}
+porCartao[cid].total+=Number(v.valor_fatura||0)
+porCartao[cid].vencIds.push(v.id_vencimento)
+const c=cartoes.find(x=>x.id===cid)||{}
+porCartao[cid].nome=c.descricao||'Cartão'
+if(!porCartao[cid].dataVenc||v.data_vencimento<porCartao[cid].dataVenc)porCartao[cid].dataVenc=v.data_vencimento
+if(v.status!=='pago')porCartao[cid].status='pendente'
+})
+// Adicionar cartões sem vencimentos no mês
+cartoes.forEach(c=>{
+if(!porCartao[c.id])porCartao[c.id]={total:0,vencIds:[],nome:c.descricao||'Cartão',dataVenc:null,status:'sem_movimento',cartaoId:c.id,tipo:'cartao'}
+})
+
+// Consolidar formas de pagamento
+const formasPgtoLoaded=window._formasPgtoCache||[]
+const lancNaoCartao=lancamentosMes.filter(l=>!l.cartao_id&&l.tipo==='despesa')
+const porForma={}
+lancNaoCartao.forEach(l=>{
+const fpId=l.forma_pgto_id||'sem'
+const fpNome=l.nome_forma_pgto||'Outros'
+if(!porForma[fpId])porForma[fpId]={total:0,totalPendente:0,lancIds:[],nome:fpNome,status:'pago',tipo:'forma'}
+porForma[fpId].total+=Number(l.valor||0)
+porForma[fpId].lancIds.push(l.id_lancamento)
+if(l.status!=='pago'){porForma[fpId].status='pendente';porForma[fpId].totalPendente+=Number(l.valor||0)}
+})
+formasPgtoLoaded.filter(f=>{const d=(f.descricao||'').toUpperCase();return !d.includes('CARTÃO')&&!d.includes('CARTAO')&&!d.includes('CRÉDITO')&&!d.includes('CREDITO')&&!d.includes('DÉBITO')&&!d.includes('DEBITO')&&!d.includes('TRANSFERÊNCIA')&&!d.includes('TRANSFERENCIA')}).forEach(f=>{
+if(!porForma[f.id])porForma[f.id]={total:0,totalPendente:0,lancIds:[],nome:f.descricao,status:'sem_movimento',tipo:'forma'}
+})
+
+const itemsCartao=Object.values(porCartao)
+const itemsForma=Object.values(porForma)
+
+// Aplicar filtros
+const busca=getFiltroBusca()
+let filteredCartao=itemsCartao
+let filteredForma=itemsForma
+if(filtroStatus!=='todos'){
+filteredCartao=itemsCartao.filter(i=>i.status===filtroStatus)
+filteredForma=itemsForma.filter(i=>i.status===filtroStatus)
+}
+if(busca){
+const lancDespesas=lancamentosMes.filter(l=>l.tipo==='despesa')
+const cartaoIdsComMatch=new Set()
+const formaIdsComMatch=new Set()
+lancDespesas.forEach(l=>{
+const nome=(l.nome_subcategoria||'').toLowerCase()
+const obs=(l.observacao||'').toLowerCase()
+if(nome.includes(busca)||obs.includes(busca)){
+if(l.cartao_id)cartaoIdsComMatch.add(l.cartao_id)
+else if(l.forma_pgto_id)formaIdsComMatch.add(l.forma_pgto_id)
+else formaIdsComMatch.add('sem')
+}
+})
+filteredCartao=filteredCartao.filter(i=>cartaoIdsComMatch.has(i.cartaoId))
+filteredForma=filteredForma.filter(i=>i.lancIds.some(id=>{const l=lancamentosMes.find(x=>x.id_lancamento===id);return l&&((l.nome_subcategoria||'').toLowerCase().includes(busca)||(l.observacao||'').toLowerCase().includes(busca))}))
+}
+const todosItems=[...filteredCartao,...filteredForma]
+
+if(!todosItems.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:.85rem">Nenhum resultado para o filtro selecionado.</div>';return}
+
+const totalPendente=filteredCartao.filter(i=>i.status!=='pago').reduce((s,i)=>s+i.total,0)+filteredForma.reduce((s,i)=>s+i.totalPendente,0)
+
+let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+const todosCards=[...filteredCartao.map(item=>({...item,isCartao:true})),...filteredForma.map(item=>({...item,isCartao:false}))]
+todosCards.forEach(item=>{
+if(item.isCartao){
+const mapKey='fat_'+item.cartaoId+'_'+Math.random().toString(36).substr(2,6)
+window._fatVencIds[mapKey]=item.vencIds
+const cartaoData=cartoes.find(c=>c.id===item.cartaoId)||{}
+const diaVenc=Number(cartaoData.dia_vencimento||0)
+const diasFech=Number(cartaoData.qtd_dias_fechamento||0)
+const pago=item.status==='pago'
+const semMovimento=item.status==='sem_movimento'
+
+// Calcular datas de fechamento e vencimento da fatura atual
+let statusLabel='', statusIcon='', statusColor='', borderColor='var(--border)'
+const hoje=new Date();hoje.setHours(0,0,0,0)
+let proxFaturaInfo='', idVencProx=0, faturaFechada=false
+
+if(diaVenc){
+const dataVencObj=new Date(anoAtual,mesAtual-1,diaVenc,12,0,0)
+const dataFechObj=new Date(anoAtual,mesAtual-1,diaVenc,12,0,0)
+dataFechObj.setDate(dataFechObj.getDate()-diasFech)
+const dataFechNorm=new Date(dataFechObj);dataFechNorm.setHours(0,0,0,0)
+const dataVencNorm=new Date(dataVencObj);dataVencNorm.setHours(0,0,0,0)
+const diffVenc=Math.round((dataVencNorm-hoje)/(1000*60*60*24))
+const diffFech=Math.round((dataFechNorm-hoje)/(1000*60*60*24))
+// Calcular próximo mês de fatura (para onde vão novas compras)
+const proxFatMes=mesAtual<12?mesAtual+1:1
+const proxFatAno=mesAtual<12?anoAtual:anoAtual+1
+if(pago){
+statusLabel='✅ Paga';statusColor='var(--success)';borderColor='var(--success)'
+}else if(semMovimento){
+statusLabel='— Sem movimento';statusColor='var(--text-muted)';borderColor='var(--border)'
+}else if(diffVenc<0){
+statusLabel=`⚠️ Vencida há ${Math.abs(diffVenc)} dia${Math.abs(diffVenc)>1?'s':''}`;statusColor='var(--danger)';borderColor='var(--danger)'
+}else if(diffVenc===0){
+statusLabel='⚠️ Vence hoje';statusColor='var(--danger)';borderColor='var(--danger)'
+}else if(diffFech<=0){
+statusLabel=`🔒 Fechada · Vence em ${diffVenc} dia${diffVenc>1?'s':''}`;statusColor='var(--warning)';borderColor='var(--warning)'
+}else{
+statusLabel=`🟢 Aberta · Fecha em ${diffFech} dia${diffFech>1?'s':''}`;statusColor='var(--primary)';borderColor='var(--primary)'
+}
+// Info de próxima fatura (quando fechada, vencida ou paga)
+faturaFechada=!semMovimento&&diffFech<=0
+proxFaturaInfo=faturaFechada?`<div style="margin-top:6px;font-size:.68rem;color:var(--text-secondary)">Novas compras irão para <strong style="color:var(--text)">${M[proxFatMes-1]}/${proxFatAno}</strong></div>`:''
+// Buscar id_vencimento do próximo mês para o botão +Compra
+const vencProxCartao=vencimentosProxMes.find(v=>String(v.id_cartao_credito)===String(item.cartaoId))
+idVencProx=vencProxCartao?vencProxCartao.id_vencimento:0
+}else{
+if(pago){statusLabel='✅ Paga';statusColor='var(--success)';borderColor='var(--success)'}
+else if(semMovimento){statusLabel='— Sem movimento';statusColor='var(--text-muted)';borderColor='var(--border)'}
+else{statusLabel='⏳ Pendente';statusColor='var(--warning)';borderColor='var(--warning)'}
+}
+
+const valorCor=pago?'var(--success)':semMovimento?'var(--text-muted)':'var(--text)'
+
+html+=`
+<div class="fatura-card" style="margin-bottom:0;border-left:3px solid ${borderColor};${pago?'opacity:.8':''}">
+<div class="fatura-header"><span class="fatura-nome" style="font-size:.88rem">💳 ${item.nome}</span></div>
+<div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Fatura ${M[mesAtual-1]}/${anoAtual}</div>
+<div style="margin-top:8px;font-size:1.15rem;font-weight:800;color:${valorCor}">${moeda(item.total)}</div>
+<div style="margin-top:8px;font-size:.72rem;font-weight:600;color:${statusColor}">${statusLabel}</div>
+${proxFaturaInfo}
+<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+<button onclick="event.stopPropagation();abrirFaturaConsolidada('${mapKey}','${item.nome.replace(/'/g,"\\'")}',${item.total},${item.cartaoId})" style="flex:1;padding:7px 0;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">Ver Fatura</button>
+${!pago&&!semMovimento?`<button onclick="event.stopPropagation();pagarFaturaCartao(${item.cartaoId},'${item.nome.replace(/'/g,"\\'")}')" style="flex:1;padding:7px 0;border:none;border-radius:var(--radius-sm);background:var(--success);color:#fff;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">Pagar</button>`:`<button onclick="event.stopPropagation();reverterFaturaCartao(${item.cartaoId},'${item.nome.replace(/'/g,"\\'")}')" style="flex:1;padding:7px 0;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text-muted);font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">${pago?'Reverter':'—'}</button>`}
+<button onclick="event.stopPropagation();novaCompraCartao(${item.cartaoId},'${item.nome.replace(/'/g,"\\'")}')" style="padding:7px 10px;border:1.5px solid var(--primary);border-radius:var(--radius-sm);background:var(--surface);color:var(--primary);font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s">+ Compra</button>
+</div>
+</div>`
+}else{
+// Formas de pagamento (PIX, Dinheiro, etc)
+const pago=item.status==='pago'
+const semMovimento=item.status==='sem_movimento'
+const icon=item.nome.toUpperCase().includes('PIX')?'📱':item.nome.toUpperCase().includes('DINHEIRO')?'💵':'💰'
+const mapKey='fp_'+Math.random().toString(36).substr(2,6)
+window._fatLancIds[mapKey]=item.lancIds
+const valorCor=pago?'var(--success)':semMovimento?'var(--text-muted)':'var(--text)'
+const statusLabel=pago?'Pago':semMovimento?'Sem movimento':'Pendente'
+const statusColor=pago?'var(--success)':semMovimento?'var(--text-muted)':'var(--warning)'
+html+=`
+<div class="fatura-card" style="margin-bottom:0;border-left:3px solid ${statusColor};${pago?'opacity:.8':''}" onclick="abrirFaturaFormaPgto('${mapKey}','${item.nome.replace(/'/g,"\\'")}')">
+<div class="fatura-header"><span class="fatura-nome" style="font-size:.85rem">${icon} ${item.nome}</span></div>
+<div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+<span style="font-size:.72rem;color:var(--text-muted)">${item.lancIds.length} despesa${item.lancIds.length>1?'s':''}</span>
+<span style="font-size:1.05rem;font-weight:800;color:${valorCor}">${moeda(item.total)}</span>
+</div>
+<div style="margin-top:8px">
+<span style="display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:${statusColor};background:color-mix(in srgb, ${statusColor} 12%, transparent);padding:3px 8px;border-radius:99px">Status: ${statusLabel}</span>
+</div>
+</div>`
+}
+})
+html+=`</div>`
+html+=`<div class="fatura-total"><span>Total Pendente</span><span style="color:var(--danger)">${moeda(totalPendente)}</span></div>`
+// Card Categoria - Top categorias do mês
+const porCatMes={}
+lancamentosMes.filter(l=>l.tipo==='despesa').forEach(l=>{const cat=l.nome_categoria||'Outros';porCatMes[cat]=(porCatMes[cat]||0)+Number(l.valor||0)})
+const totalDespMes=Object.values(porCatMes).reduce((s,v)=>s+v,0)
+const topCats=Object.entries(porCatMes).sort((a,b)=>b[1]-a[1]).slice(0,6)
+if(topCats.length){
+html+=`<div style="margin-top:14px;background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius);padding:14px">
+<div style="font-size:.72rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px">📂 Categoria</div>
+<div style="font-size:.7rem;color:var(--text-muted);margin-bottom:8px">Top categorias do mês:</div>
+${topCats.map(([nome,val])=>{const pct=totalDespMes>0?Math.round(val/totalDespMes*100):0;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:.82rem;border-bottom:1px solid var(--border-light)"><span style="font-weight:600;color:var(--text)">${nome}</span><span><strong style="color:var(--danger)">${moeda(val)}</strong> <span style="font-size:.7rem;color:var(--text-muted)">(${pct}%)</span></span></div>`}).join('')}
+</div>`
+}
+el.innerHTML=html
+}
+
+async function renderSaudeCartoes(){
+const el=document.getElementById('saude-cartoes')
+const MS=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+try{
+const res=await fetch(`/cartoes/vencimentos?ano=${anoAtual}`)
+const todos=await res.json()
+// Filtra vencimentos futuros (mês > mesAtual) — inclui pagos e pendentes
+const futuros=todos.filter(v=>{
+const mes=Number((v.data_vencimento||'').split('-')[1])
+return mes>mesAtual&&Number(v.valor_fatura)>0
+})
+// Determinar quais meses futuros existem (de mesAtual+1 até 12)
+const mesesFuturos=[]
+for(let m=mesAtual+1;m<=12;m++)mesesFuturos.push(m)
+// Se não há meses futuros no ano e não há cartões, mostrar mensagem
+if(!mesesFuturos.length&&!cartoes.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:.82rem">Nenhuma fatura futura pendente. ✅</div>';return}
+// Agrupar vencimentos por mês
+const porMes={}
+futuros.forEach(v=>{const mes=Number((v.data_vencimento||'').split('-')[1]);if(!porMes[mes])porMes[mes]=[];porMes[mes].push(v)})
+// Garantir que todos os meses futuros existam (mesmo sem vencimentos)
+mesesFuturos.forEach(m=>{if(!porMes[m])porMes[m]=[]})
+// Calcular total geral (todos com valor > 0)
+const totalGeral=futuros.reduce((s,v)=>s+Number(v.valor_fatura||0),0)
+const totalPendenteFuturo=futuros.filter(v=>v.status!=='pago').reduce((s,v)=>s+Number(v.valor_fatura||0),0)
+if(!totalGeral&&!cartoes.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:.82rem">Nenhuma fatura futura pendente. ✅</div>';return}
+let html=''
+let idx=0
+window._vencIdsMap={}
+Object.keys(porMes).sort((a,b)=>a-b).forEach(mes=>{
+const itens=porMes[mes]
+// Montar porCartao incluindo TODOS os cartões do usuário
+const porCartao={}
+// Inicializar com todos os cartões (valor 0)
+cartoes.forEach(c=>{
+porCartao[c.id]={total:0,nome:c.descricao||'Cartão',vencIds:[],diaVenc:Number(c.dia_vencimento||0),diasFech:Number(c.qtd_dias_fechamento||0),mes:Number(mes),pago:false,temVenc:false}
+})
+// Somar valores dos vencimentos existentes
+itens.forEach(v=>{
+const cid=v.id_cartao_credito
+if(!porCartao[cid]){
+const c=cartoes.find(x=>x.id==cid)||{}
+porCartao[cid]={total:0,nome:c.descricao||'Cartão',vencIds:[],diaVenc:Number(c.dia_vencimento||0),diasFech:Number(c.qtd_dias_fechamento||0),mes:Number(mes),pago:true,temVenc:true}
+}
+porCartao[cid].total+=Number(v.valor_fatura||0)
+porCartao[cid].vencIds.push(v.id_vencimento)
+porCartao[cid].temVenc=true
+if(v.status!=='pago')porCartao[cid].pago=false
+})
+const totalMes=Object.values(porCartao).reduce((s,pc)=>s+pc.total,0)
+const mesPago=itens.length>0&&itens.every(v=>v.status==='pago')
+html+=`<div class="fatura-card" style="cursor:default;border-left:3px solid ${mesPago?'var(--success)':'var(--primary)'}">
+<div class="fatura-header" onclick="this.parentElement.querySelector('.prox-body').style.display=this.parentElement.querySelector('.prox-body').style.display==='none'?'':'none';this.querySelector('.chev-prox').textContent=this.parentElement.querySelector('.prox-body').style.display==='none'?'▶':'▼'" style="cursor:pointer">
+<span class="fatura-nome">📅 ${MS[mes-1]} ${anoAtual}${mesPago?' <span style="font-size:.65rem;color:var(--success)">✅ Pago</span>':''}</span>
+<span style="display:flex;align-items:center;gap:8px"><span class="fatura-valor" style="color:${totalMes>0?(mesPago?'var(--success)':'var(--danger)'):'var(--text-muted)'}">${moeda(totalMes)}</span><span class="chev-prox" style="font-size:.65rem;color:var(--text-muted)">▶</span></span>
+</div>
+<div class="prox-body" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light)">`
+Object.values(porCartao).forEach(pc=>{
+const mapKey='vc_'+idx+'_'+Math.random().toString(36).substr(2,6)
+window._vencIdsMap[mapKey]=pc.vencIds
+let vencStr='—',melhorDiaStr=''
+if(pc.diaVenc){
+const dataOriginal=new Date(anoAtual,pc.mes-1,pc.diaVenc,12,0,0)
+const dataVencReal=proximoDiaUtil(dataOriginal)
+vencStr=dataVencReal.toLocaleDateString('pt-BR')
+if(pc.diasFech){
+const melhor=new Date(anoAtual,pc.mes-1,pc.diaVenc,12,0,0)
+melhor.setDate(melhor.getDate()-pc.diasFech)
+melhorDiaStr=melhor.toLocaleDateString('pt-BR')
+}
+}
+const valorCor=pc.total>0?((pc.temVenc&&pc.pago)?'var(--success)':'var(--danger)'):'var(--text-muted)'
+const pagoTag=(pc.temVenc&&pc.pago&&pc.total>0)?' <span style="font-size:.6rem;color:var(--success);font-weight:700">✅</span>':''
+html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-light)">
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-size:.82rem;font-weight:600;color:var(--text)">💳 ${pc.nome}${pagoTag}</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<strong style="font-size:.88rem;color:${valorCor}">${moeda(pc.total)}</strong>
+${pc.vencIds.length?`<button onclick="event.stopPropagation();verDespesasCartao('${pc.nome.replace(/'/g,"\\'")}','${mapKey}')" style="background:none;border:none;cursor:pointer;font-size:.82rem;padding:2px 4px;border-radius:4px" title="Ver despesas">🔍</button>`:''}
+</div>
+</div>
+<div style="display:flex;gap:12px;padding:2px 0 6px;font-size:.68rem;color:var(--text-muted)">
+<span>Venc: ${vencStr}</span>${melhorDiaStr?`<span>· Melhor compra: ${melhorDiaStr}</span>`:''}
+</div>`
+})
+html+=`</div></div>`
+idx++
+})
+html+=`<div class="fatura-total"><span>Total Previsto (${anoAtual})</span><span style="color:var(--danger)">${moeda(totalGeral)}</span></div>`
+if(totalPendenteFuturo<totalGeral){html+=`<div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:.78rem;color:var(--text-secondary)"><span>Pendente</span><span style="color:var(--danger);font-weight:700">${moeda(totalPendenteFuturo)}</span></div>`}
+// Buscar consolidado do próximo ano se existir
+try{
+const proxAno=anoAtual+1
+const resProxAno=await fetch(`/cartoes/vencimentos?ano=${proxAno}`)
+const todosProxAno=await resProxAno.json()
+const pendentesProxAno=todosProxAno.filter(v=>v.status==='pendente'&&Number(v.valor_fatura)>0)
+if(pendentesProxAno.length){
+const totalProxAno=pendentesProxAno.reduce((s,v)=>s+Number(v.valor_fatura||0),0)
+html+=`<div class="fatura-card" style="cursor:default;border-left:3px solid var(--text-muted);margin-top:10px">
+<div class="fatura-header"><span class="fatura-nome">📅 ${proxAno}</span><span class="fatura-valor" style="color:var(--danger)">${moeda(totalProxAno)}</span></div>
+<div style="font-size:.68rem;color:var(--text-muted);margin-top:4px">${pendentesProxAno.length} vencimento${pendentesProxAno.length>1?'s':''} previsto${pendentesProxAno.length>1?'s':''}</div>
+</div>`
+}
+}catch(e2){}
+el.innerHTML=html
+}catch(e){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem">Erro ao carregar.</div>'}
+}
+
+async function renderDiagnostico(){
+const el=document.getElementById('diagnostico-card')
+if(!el)return
+// Calcular métricas
+const totalCompromissos=vencimentosCartao.filter(v=>Number(v.valor_fatura)>0&&v.status!=='pago').reduce((s,v)=>s+Number(v.valor_fatura||0),0)
+const lancPendentes=lancamentosMes.filter(l=>!l.cartao_id&&l.tipo==='despesa'&&l.status!=='pago')
+const totalOutrosPendente=lancPendentes.reduce((s,l)=>s+Number(l.valor||0),0)
+const totalMes=totalCompromissos+totalOutrosPendente
+// Receita
+const receitas=lancamentosMes.filter(l=>l.tipo==='receita').reduce((s,l)=>s+Number(l.valor||0),0)
+const pctReceita=receitas>0?Math.round(totalMes/receitas*100):0
+// Cartão com maior dívida
+const porCartao={};vencimentosCartao.filter(v=>Number(v.valor_fatura)>0&&v.status!=='pago').forEach(v=>{const c=cartoes.find(x=>x.id===v.id_cartao_credito);const nome=c?c.descricao:'Cartão';porCartao[nome]=(porCartao[nome]||0)+Number(v.valor_fatura||0)})
+const maiorCartao=Object.entries(porCartao).sort((a,b)=>b[1]-a[1])[0]
+// Planejado vs Não planejado
+let planejado=0,naoPlanejado=0
+try{
+const rOrc=await fetch(`/orcamentos`)
+const orcs=await rOrc.json()
+const orcAno=orcs.find(o=>Number(o.ano_orcamento)===anoAtual)
+if(orcAno){
+const rDet=await fetch(`/orcamentos/${orcAno.id_orcamento}/detalhes`)
+const detalhes=await rDet.json()
+// Subcategorias planejadas para o mês atual
+const subsPlanejadas=new Set()
+detalhes.filter(d=>Number(d.mes_referencia)===mesAtual).forEach(d=>{if(d.id_subcategoria)subsPlanejadas.add(Number(d.id_subcategoria))})
+// Verificar lançamentos de despesa do mês
+const despesas=lancamentosMes.filter(l=>l.tipo==='despesa')
+despesas.forEach(l=>{
+const v=Number(l.valor||0)
+if(l.subcategoria_id&&subsPlanejadas.has(Number(l.subcategoria_id))){planejado+=v}else{naoPlanejado+=v}
+})
+}
+}catch(e){console.error('Erro diagnostico:',e)}
+const totalDesp=planejado+naoPlanejado
+const pctPlan=totalDesp>0?Math.round(planejado/totalDesp*100):0
+const pctNaoPlan=totalDesp>0?100-pctPlan:0
+// Gerar insights
+const insights=[]
+if(totalDesp>0){
+insights.push({icon:'📊',text:`${pctPlan}% das despesas lançadas foram planejadas — ${moeda(planejado)}`})
+insights.push({icon:'📊',text:`${pctNaoPlan}% das despesas lançadas não foram planejadas — ${moeda(naoPlanejado)}`})
+}
+if(receitas>0){
+if(pctReceita<=30)insights.push({icon:'✅',text:`Compromissos representam apenas ${pctReceita}% da receita.`})
+else if(pctReceita<=50)insights.push({icon:'⚠️',text:`Compromissos representam ${pctReceita}% da receita. Atenção.`})
+else insights.push({icon:'🚨',text:`Compromissos representam ${pctReceita}% da receita. Risco alto!`})
+}else{
+insights.push({icon:'💡',text:'Sem receitas registradas para calcular comprometimento.'})
+}
+if(maiorCartao){insights.push({icon:'⚠️',text:`O cartão ${maiorCartao[0]} concentra a maior parte da dívida atual (${moeda(maiorCartao[1])}).`})}
+if(receitas>0&&pctReceita<=30){insights.push({icon:'✅',text:'Não existe risco de comprometimento excessivo.'})}
+else if(receitas>0&&pctReceita>50){insights.push({icon:'🚨',text:'Risco de comprometimento excessivo. Reduza despesas.'})}
+if(!totalMes&&!totalDesp){insights.push({icon:'✅',text:'Nenhum compromisso pendente neste mês. Parabéns!'})}
+// Pendências
+const qtdPendencias=lancamentosMes.filter(l=>l.tipo==='despesa'&&l.status!=='pago').length+vencimentosCartao.filter(v=>Number(v.valor_fatura)>0&&v.status!=='pago').length
+if(qtdPendencias>0){insights.push({icon:'⏳',text:`${qtdPendencias} pendência${qtdPendencias>1?'s':''}`})}
+// Investimentos vs receita
+const investimentos=lancamentosMes.filter(l=>l.tipo==='investimento').reduce((s,l)=>s+Number(l.valor||0),0)
+if(receitas>0){const pctInv=Math.round(investimentos/receitas*100);insights.push({icon:'💡',text:`Invest. ${pctInv}% (meta 15-20%)`})}
+el.innerHTML=insights.map(i=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;font-size:.82rem;color:var(--text);border-bottom:1px solid var(--border-light)"><span style="flex-shrink:0">${i.icon}</span><span>${i.text}</span></div>`).join('')
+}
+
+async function abrirFaturaFormaPgto(mapKey,nomeForma){
+const lancIds=window._fatLancIds[mapKey]||[]
+const bg=document.getElementById('modal-bg'),body=document.getElementById('modal-body'),tit=document.getElementById('modal-titulo'),foot=document.getElementById('modal-foot')
+tit.textContent=`Despesas — ${nomeForma}`
+body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.82rem">Carregando...</div>'
+foot.innerHTML=`<button class="btn btn-outline" onclick="fecharModal()">Fechar</button>`
+bg.classList.add('open')
+try{
+const itens=lancamentosMes.filter(l=>lancIds.includes(l.id_lancamento))
+if(!itens.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Nenhum item.</div>';return}
+itens.sort((a,b)=>{const da=a.data_lancamento||'';const db=b.data_lancamento||'';return da.localeCompare(db)})
+const total=itens.reduce((s,l)=>s+Number(l.valor||0),0)
+const pendentes=itens.filter(l=>l.status!=='pago')
+const allPago=pendentes.length===0
+const statusBadge=allPago?'<span style="display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--success);background:var(--success-light);padding:3px 10px;border-radius:99px">✅ Pago</span>':'<span style="display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--warning);background:var(--warning-light,#FEF3C7);padding:3px 10px;border-radius:99px">⏳ Pendente</span>'
+body.innerHTML=`
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div><div style="font-size:1.1rem;font-weight:800;color:${allPago?'var(--success)':'var(--danger)'}">${moeda(total)}</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${itens.length} ite${itens.length>1?'ns':'m'}</div></div>
+${statusBadge}
+</div>
+<div style="border-top:1px solid var(--border-light);max-height:350px;overflow-y:auto;padding-top:8px">
+${itens.map(l=>{
+const pagol=l.status==='pago'
+return`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px solid var(--border-light);font-size:.82rem${pagol?';opacity:.6':''}"><div style="flex:1;min-width:0"><span style="font-weight:600">${l.nome_subcategoria||'—'}</span><br><span style="font-size:.68rem;color:var(--text-muted)">${l.nome_categoria||''} · ${fmtData(l.data_lancamento)}</span></div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><strong style="color:${pagol?'var(--success)':'var(--danger)'}">${moeda(l.valor)}</strong>${!pagol?`<button onclick="pagarDespesaIndividual(${l.id_lancamento},'${mapKey}','${nomeForma.replace(/'/g,"\\'")}')" style="background:var(--success-light);border:1px solid var(--success);border-radius:4px;cursor:pointer;font-size:.65rem;padding:3px 6px;color:var(--success);font-weight:700;font-family:inherit" title="Pagar">✓</button>`:''}<button onclick="editarDespesaFormaPgto(${l.id_lancamento},'${mapKey}','${nomeForma.replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;font-size:.78rem;padding:2px 4px;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'" title="Editar">✏️</button></div></div>`}).join('')}
+</div>`
+}catch(e){body.innerHTML='<div style="color:var(--danger);text-align:center;padding:20px">Erro ao carregar.</div>'}
+}
+
+async function pagarDespesaIndividual(idLancamento,mapKey,nomeForma){
+try{
+const r=await fetch(`/lancamentos/${idLancamento}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'pago'})})
+if(r.ok){toast('✅ Despesa paga!');await load();abrirFaturaFormaPgto(mapKey,nomeForma)}else{const err=await r.json().catch(()=>({}));toast(err.message||'Erro ao pagar.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+async function pagarItemCartao(idLancamento,mapKey,nomeCartao,cartaoId){
+try{
+const r=await fetch(`/lancamentos/${idLancamento}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'pago',confirmar_pagamento:true})})
+if(r.ok){toast('✅ Item pago!');await load();abrirFaturaConsolidada(mapKey,nomeCartao,0,cartaoId)}else{const err=await r.json().catch(()=>({}));toast(err.message||'Erro ao pagar.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+async function editarDespesaFormaPgto(idLancamento,mapKey,nomeForma){
+const body=document.getElementById('modal-body'),foot=document.getElementById('modal-foot'),tit=document.getElementById('modal-titulo')
+tit.textContent=`Editar Despesa`
+body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.82rem">Carregando...</div>'
+foot.innerHTML=''
+try{
+const item=lancamentosMes.find(l=>Number(l.id_lancamento)===Number(idLancamento))
+if(!item){body.innerHTML='<div style="color:var(--danger);padding:20px;text-align:center">Não encontrado.</div>';return}
+const dataLanc=typeof item.data_lancamento==='string'?item.data_lancamento.split('T')[0]:new Date(item.data_lancamento).toISOString().split('T')[0]
+if(!_catsFatura.length)await carregarCategoriasParaFatura()
+const catOptions=_catsFatura.map(c=>`<option value="${c.id}" ${String(c.id)===String(item.id_categoria)?'selected':''}>${c.descricao}</option>`).join('')
+body.innerHTML=`
+<div style="display:flex;flex-direction:column;gap:14px">
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Descrição</label><input type="text" id="ed-descricao" value="${(item.nome_subcategoria||'').replace(/"/g,'&quot;')}" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Valor</label><input type="number" id="ed-valor" value="${item.valor}" min="0" step="0.01" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.95rem;font-weight:700;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Data</label><input type="date" id="ed-data" value="${dataLanc}" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Categoria</label><select id="ed-categoria" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none">${catOptions}</select></div>
+</div>`
+foot.innerHTML=`<button class="btn btn-outline" onclick="abrirFaturaFormaPgto('${mapKey}','${nomeForma.replace(/'/g,"\\'")}')">Cancelar</button><button class="btn btn-danger" onclick="excluirDespesaFormaPgto(${idLancamento},'${mapKey}','${nomeForma.replace(/'/g,"\\'")}')">🗑 Excluir</button><button class="btn btn-primary" onclick="salvarEdicaoFormaPgto(${idLancamento},'${mapKey}','${nomeForma.replace(/'/g,"\\'")}')">Salvar</button>`
+}catch(e){body.innerHTML='<div style="color:var(--danger);padding:20px;text-align:center">Erro.</div>'}
+}
+
+async function salvarEdicaoFormaPgto(idLancamento,mapKey,nomeForma){
+const descricao=document.getElementById('ed-descricao').value.trim()
+const valor=Number(document.getElementById('ed-valor').value)
+const data=document.getElementById('ed-data').value
+const catId=document.getElementById('ed-categoria').value
+if(!descricao){toast('Informe a descrição.');return}
+if(!valor||valor<=0){toast('Informe o valor.');return}
+try{
+const payload={valor,data_lancamento:data,descricao_subcategoria:descricao,id_categoria:Number(catId)}
+const r=await fetch(`/lancamentos/${idLancamento}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+if(r.ok){toast('✅ Despesa atualizada!');fecharModal();await load()}else{const err=await r.json().catch(()=>({}));toast(err.message||'Erro ao atualizar.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+async function excluirDespesaFormaPgto(idLancamento,mapKey,nomeForma){
+if(!confirm('Deseja excluir esta despesa?'))return
+try{
+const r=await fetch(`/lancamentos/${idLancamento}`,{method:'DELETE'})
+if(r.ok){toast('🗑 Despesa excluída!');fecharModal();await load()}else{toast('Erro ao excluir.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+async function abrirFaturaConsolidada(mapKey,nome,valor,cartaoId){
+const vencIds=window._fatVencIds[mapKey]||[]
+const bg=document.getElementById('modal-bg'),body=document.getElementById('modal-body'),tit=document.getElementById('modal-titulo'),foot=document.getElementById('modal-foot')
+const allVencs=vencimentosCartao.filter(v=>vencIds.includes(v.id_vencimento))
+const pago=allVencs.length>0&&allVencs.every(v=>v.status==='pago')
+const primeiroVenc=vencIds[0]
+tit.textContent=`Fatura ${M[mesAtual-1]}/${anoAtual} — ${nome}`
+body.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.82rem">Carregando itens...</div>`
+if(pago){
+foot.innerHTML=`<button class="btn btn-outline" onclick="fecharModal()">Fechar</button><button class="btn btn-primary" style="background:var(--warning)" onclick="reverterPagamento(${cartaoId})">↩ Reverter</button>`
+}else{
+foot.innerHTML=`<button class="btn btn-outline" onclick="fecharModal()">Fechar</button>`
+}
+bg.classList.add('open')
+try{
+let todas=[]
+
+// Carregar itens do mês atual (vencIds do mês selecionado)
+for(const id of vencIds){const r=await fetch(`/lancamentos/por-vencimento/${id}`);const ls=await r.json();todas=todas.concat(ls)}
+if(!todas.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Nenhum item na fatura.</div>';return}todas.sort((a,b)=>{const ca=(a.nome_categoria||'').localeCompare(b.nome_categoria||'');if(ca!==0)return ca;const da=a.data_lancamento||'';const db=b.data_lancamento||'';return da.localeCompare(db)})
+const totalGeral=todas.reduce((s,l)=>s+Number(l.valor||0),0)
+const statusBadge=pago?'<span style="display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--success);background:var(--success-light);padding:3px 10px;border-radius:99px">✅ Pago</span>':'<span style="display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--warning);background:var(--warning-light,#FEF3C7);padding:3px 10px;border-radius:99px">⏳ Pendente</span>'
+body.innerHTML=`
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div><div style="font-size:1.1rem;font-weight:800;color:${pago?'var(--success)':'var(--danger)'}">${moeda(totalGeral)} <span style="font-size:.7rem;font-weight:600;color:var(--text-muted)">(${M[mesAtual-1]})</span></div><div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${todas.length} ite${todas.length>1?'ns':'m'}</div></div>
+${statusBadge}
+</div>
+${pago?`<div style="text-align:center;padding:8px;color:var(--success);font-size:.82rem">✅ Fatura de ${M[mesAtual-1]} paga integralmente.</div>`:''}
+<div style="border-top:1px solid var(--border-light);max-height:350px;overflow-y:auto;padding-top:8px">
+${todas.map(l=>{const nParc=Number(l.total_parcelas||0);const isParc=nParc>1;const numParcela=l.numero_parcela||1;const parcBadge=isParc?`<span style="font-size:.6rem;font-weight:700;color:var(--primary);background:var(--primary-light);padding:2px 6px;border-radius:99px;margin-left:4px">${numParcela}/${nParc}</span>`:'';const planejada=l.tipo_despesa?"<span style=\"font-size:.6rem;font-weight:600;margin-left:4px;color:"+(l.tipo_despesa==='fixa'?'var(--primary)':'var(--purple)')+"\">"+(l.tipo_despesa==='fixa'?'(Fixa)':'(Variável)')+"</span>":'';const itemPago=l.status==='pago';return`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px solid var(--border-light);font-size:.82rem${isParc?';background:rgba(79,70,229,.04)':''}${itemPago&&pago?';opacity:.7':''}"><div style="flex:1;min-width:0"><span style="font-weight:600">${l.nome_subcategoria||'—'}${parcBadge}</span><br><span style="font-size:.68rem;color:var(--text-muted)">${l.nome_categoria||''} · ${fmtData(l.data_lancamento)}${planejada}</span></div><div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><strong style="color:${itemPago?'var(--success)':'var(--danger)'}">${moeda(l.valor)}</strong>${!itemPago?`<button onclick="pagarItemCartao(${l.id_lancamento},'${mapKey}','${nome.replace(/'/g,"\\'")}',${cartaoId})" style="background:var(--success-light);border:1px solid var(--success);border-radius:4px;cursor:pointer;font-size:.65rem;padding:3px 6px;color:var(--success);font-weight:700;font-family:inherit" title="Pagar">✓</button>`:''}<button onclick="editarDespesaFatura(${l.id_lancamento},${l.id_vencimento||primeiroVenc},'${nome.replace(/'/g,"\\'")}',${cartaoId})" style="background:none;border:none;cursor:pointer;font-size:.78rem;padding:2px 4px;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'" title="Editar">✏️</button></div></div>`}).join('')}
+</div>`
+}catch(e){body.innerHTML='<div style="color:var(--danger);text-align:center;padding:20px">Erro ao carregar itens.</div>'}
+}
+
+async function abrirFatura(idVenc,nome,valor,cartaoId){
+const bg=document.getElementById('modal-bg'),body=document.getElementById('modal-body'),tit=document.getElementById('modal-titulo'),foot=document.getElementById('modal-foot')
+const venc=vencimentosCartao.find(v=>Number(v.id_vencimento)===Number(idVenc))
+const pago=venc&&venc.status==='pago'
+tit.textContent=`Fatura — ${nome}`
+body.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.82rem">Carregando itens...</div>`
+if(pago){
+foot.innerHTML=`<button class="btn btn-outline" onclick="fecharModal()">Fechar</button><button class="btn btn-primary" style="background:var(--warning)" onclick="reverterPagamento(${cartaoId})">↩ Reverter Pagamento</button>`
+}else{
+foot.innerHTML=`<button class="btn btn-outline" onclick="fecharModal()">Fechar</button><button class="btn btn-primary" onclick="abrirAdicionarCompra(${cartaoId},${idVenc},'${nome.replace(/'/g,"\\'")}')">+ Compra</button><button class="btn btn-primary" style="background:var(--success)" id="btn-pagar-fatura-single">💰 PAGAR</button>`
+}
+bg.classList.add('open')
+// Carregar itens automaticamente
+try{
+const r=await fetch(`/lancamentos/por-vencimento/${idVenc}`)
+const ls=await r.json()
+if(!ls.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Nenhum item na fatura.</div>';return}
+const t=ls.reduce((s,l)=>s+Number(l.valor||0),0)
+const valorReal=t||valor
+// Atualizar botão PAGAR com valor correto
+const btnPagarS=document.getElementById('btn-pagar-fatura-single')
+if(btnPagarS)btnPagarS.onclick=()=>pagarFaturaModal(cartaoId,nome,valorReal)
+const statusBadge=pago?'<span style="display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--success);background:var(--success-light);padding:3px 10px;border-radius:99px">✅ Pago</span>':'<span style="display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--warning);background:var(--warning-light,#FEF3C7);padding:3px 10px;border-radius:99px">⏳ Pendente</span>'
+body.innerHTML=`
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div><div style="font-size:1.1rem;font-weight:800;color:${pago?'var(--success)':'var(--danger)'}">${moeda(valorReal)}</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${ls.length} ite${ls.length>1?'ns':'m'}</div></div>
+${statusBadge}
+</div>
+<div style="border-top:1px solid var(--border-light);max-height:350px;overflow-y:auto;padding-top:8px">
+${ls.map(l=>{const planejada=l.tipo_despesa?"<span style=\"font-size:.6rem;font-weight:600;margin-left:4px;color:"+(l.tipo_despesa==='fixa'?'var(--primary)':'var(--purple)')+"\">"+(l.tipo_despesa==='fixa'?'(Fixa)':'(Variável)')+"</span>":'';return`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px solid var(--border-light);font-size:.82rem"><div style="flex:1;min-width:0"><span style="font-weight:600">${l.nome_subcategoria||'—'}</span><br><span style="font-size:.68rem;color:var(--text-muted)">${l.nome_categoria||''} · ${fmtData(l.data_lancamento)}${planejada}</span></div><div style="display:flex;align-items:center;gap:6px;flex-shrink:0"><strong style="color:var(--danger)">${moeda(l.valor)}</strong>${!pago?`<button onclick="editarDespesaFatura(${l.id_lancamento},${idVenc},'${nome.replace(/'/g,"\\'")}',${cartaoId})" style="background:none;border:none;cursor:pointer;font-size:.78rem;padding:2px 4px;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'" title="Editar">✏️</button>`:''}</div></div>`}).join('')}
+</div>`
+}catch(e){body.innerHTML='<div style="color:var(--danger);text-align:center;padding:20px">Erro ao carregar itens.</div>'}
+}
+
+async function reverterPagamento(cartaoId){
+if(!confirm('Deseja reverter o pagamento desta fatura? Os lançamentos voltarão ao status pendente.'))return
+try{
+const r=await fetch(`/cartoes/${cartaoId}/reverter-fatura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ano:anoAtual,mes:mesAtual})})
+if(r.ok){toast('↩ Pagamento revertido com sucesso!');fecharModal();await load()}else{const err=await r.json().catch(()=>({}));toast(err.message||'Erro ao reverter.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+async function editarDespesaFatura(idLancamento,idVenc,nomeCartao,cartaoId){
+const body=document.getElementById('modal-body'),foot=document.getElementById('modal-foot'),tit=document.getElementById('modal-titulo')
+tit.textContent=`Editar Despesa`
+body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.82rem">Carregando...</div>'
+foot.innerHTML=''
+// Buscar dados do lançamento
+try{
+const r=await fetch(`/lancamentos/por-vencimento/${idVenc}`)
+const ls=await r.json()
+const item=ls.find(l=>Number(l.id_lancamento)===Number(idLancamento))
+if(!item){body.innerHTML='<div style="color:var(--danger);padding:20px;text-align:center">Lançamento não encontrado.</div>';return}
+const dataLanc=typeof item.data_lancamento==='string'?item.data_lancamento.split('T')[0]:new Date(item.data_lancamento).toISOString().split('T')[0]
+// Carregar categorias para o select
+if(!_catsFatura.length)await carregarCategoriasParaFatura()
+const catOptions=_catsFatura.map(c=>`<option value="${c.id}" ${String(c.id)===String(item.id_categoria)?'selected':''}>${c.descricao}</option>`).join('')
+// Verificar se é parcelada (observação contém 'Nx)')
+const obsText=item.observacao||''
+const matchParcelas=obsText.match(/\((\d+)x\)/)
+const totalParcelas=matchParcelas?Number(matchParcelas[1]):1
+const isParcelada=totalParcelas>1
+const valorTotal=isParcelada?Number(item.valor)*totalParcelas:Number(item.valor)
+body.innerHTML=`
+<div style="display:flex;flex-direction:column;gap:14px">
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Descrição</label><input type="text" id="ed-descricao" value="${(item.nome_subcategoria||'').replace(/"/g,'&quot;')}" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Valor Total</label><input type="number" id="ed-valor" value="${valorTotal}" min="0" step="0.01" oninput="atualizarInfoCompraEd()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.95rem;font-weight:700;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Data</label><input type="date" id="ed-data" value="${dataLanc}" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Categoria</label><select id="ed-categoria" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none">${catOptions}</select></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Compra</label>
+<div style="display:flex;gap:8px;margin-top:4px">
+<button type="button" id="ed-avista" onclick="document.getElementById('ed-avista').style.background='var(--primary)';document.getElementById('ed-avista').style.color='#fff';document.getElementById('ed-avista').style.borderColor='var(--primary)';document.getElementById('ed-parcelada').style.background='var(--surface)';document.getElementById('ed-parcelada').style.color='var(--text-secondary)';document.getElementById('ed-parcelada').style.borderColor='var(--border)';document.getElementById('ed-parcelas-wrap').style.display='none';atualizarInfoCompraEd()" style="padding:8px 18px;border:1.5px solid ${isParcelada?'var(--border)':'var(--primary)'};border-radius:99px;background:${isParcelada?'var(--surface)':'var(--primary)'};color:${isParcelada?'var(--text-secondary)':'#fff'};font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit">À vista</button>
+<button type="button" id="ed-parcelada" onclick="document.getElementById('ed-parcelada').style.background='var(--primary)';document.getElementById('ed-parcelada').style.color='#fff';document.getElementById('ed-parcelada').style.borderColor='var(--primary)';document.getElementById('ed-avista').style.background='var(--surface)';document.getElementById('ed-avista').style.color='var(--text-secondary)';document.getElementById('ed-avista').style.borderColor='var(--border)';document.getElementById('ed-parcelas-wrap').style.display='block';atualizarInfoCompraEd()" style="padding:8px 18px;border:1.5px solid ${isParcelada?'var(--primary)':'var(--border)'};border-radius:99px;background:${isParcelada?'var(--primary)':'var(--surface)'};color:${isParcelada?'#fff':'var(--text-secondary)'};font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit">Parcelada</button>
+</div>
+<div id="ed-parcelas-wrap" style="display:${isParcelada?'block':'none'};margin-top:10px"><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Quantidade de parcelas</label><input type="number" id="ed-parcelas" min="2" max="48" value="${totalParcelas}" oninput="atualizarInfoCompraEd()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"></div>
+<div id="ed-info-compra" style="margin-top:8px;padding:8px 12px;background:var(--surface-hover);border-radius:var(--radius);font-size:.78rem;font-weight:600;color:var(--text)"></div>
+</div>
+</div>`
+setTimeout(()=>atualizarInfoCompraEd(),50)
+foot.innerHTML=`<button class="btn btn-outline" onclick="abrirFatura(${idVenc},'${nomeCartao.replace(/'/g,"\\'")}',0,${cartaoId})">Cancelar</button><button class="btn btn-danger" onclick="excluirDespesaFatura(${idLancamento},${idVenc},'${nomeCartao.replace(/'/g,"\\'")}',${cartaoId})">🗑 Excluir</button><button class="btn btn-primary" onclick="salvarEdicaoDespesa(${idLancamento},${idVenc},'${nomeCartao.replace(/'/g,"\\'")}',${cartaoId})">Salvar</button>`
+}catch(e){body.innerHTML='<div style="color:var(--danger);padding:20px;text-align:center">Erro ao carregar.</div>'}
+}
+
+function atualizarInfoCompraEd(){
+const el=document.getElementById('ed-info-compra');if(!el)return
+const valorTotal=Number(document.getElementById('ed-valor').value)||0
+const isParc=document.getElementById('ed-parcelas-wrap').style.display!=='none'
+if(!isParc){el.innerHTML=`<span>Tipo de Compra: <strong>À vista</strong> — Total: <strong>${moeda(valorTotal)}</strong></span>`;return}
+const qtd=Number(document.getElementById('ed-parcelas').value)||2
+const valorParc=valorTotal/qtd
+el.innerHTML=`<span>Tipo de Compra: <strong>Parcelada</strong> ${qtd}x ${moeda(valorParc)} — Total: <strong>${moeda(valorTotal)}</strong></span>`
+}
+
+function atualizarInfoCompraNc(){
+const el=document.getElementById('nc-info-compra');if(!el)return
+const valorTotal=parseValorMonetario(document.getElementById('nc-valor').value)
+const isParc=document.getElementById('nc-parcelas-wrap').style.display!=='none'
+if(!isParc){el.innerHTML=`<span>Tipo de Compra: <strong>À vista</strong> — Total: <strong>${moeda(valorTotal)}</strong></span>`;return}
+const qtd=Number(document.getElementById('nc-parcelas').value)||2
+const valorParc=valorTotal/qtd
+el.innerHTML=`<span>Tipo de Compra: <strong>Parcelada</strong> ${qtd}x ${moeda(valorParc)} — Total: <strong>${moeda(valorTotal)}</strong></span>`
+}
+
+async function salvarEdicaoDespesa(idLancamento,idVenc,nomeCartao,cartaoId){
+const descricao=document.getElementById('ed-descricao').value.trim()
+const valorTotal=Number(document.getElementById('ed-valor').value)
+const data=document.getElementById('ed-data').value
+const catId=document.getElementById('ed-categoria').value
+const isParc=document.getElementById('ed-parcelas-wrap').style.display!=='none'
+const parcelas=isParc?Number(document.getElementById('ed-parcelas').value)||1:1
+const valorParcela=isParc?Number((valorTotal/parcelas).toFixed(2)):valorTotal
+if(!descricao){toast('Informe a descrição.');return}
+if(!valorTotal||valorTotal<=0){toast('Informe o valor.');return}
+try{
+const payload={valor:valorParcela,data_lancamento:data,descricao_subcategoria:descricao,id_categoria:Number(catId)}
+const r=await fetch(`/lancamentos/${idLancamento}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+if(r.ok){toast('✅ Despesa atualizada!');fecharModal();await load()}else{const err=await r.json().catch(()=>({}));toast(err.message||'Erro ao atualizar.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+async function excluirDespesaFatura(idLancamento,idVenc,nomeCartao,cartaoId){
+if(!confirm('Deseja excluir esta despesa da fatura?'))return
+try{
+const r=await fetch(`/lancamentos/${idLancamento}`,{method:'DELETE'})
+if(r.ok){toast('🗑 Despesa excluída!');fecharModal();await load()}else{toast('Erro ao excluir.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+async function excluirDespesaProxFatura(idLancamento,mapKey,nomeCartao,cartaoId){
+if(!confirm('Deseja excluir esta despesa?'))return
+try{
+const r=await fetch(`/lancamentos/${idLancamento}`,{method:'DELETE'})
+if(r.ok){toast('🗑 Despesa excluída!');await load();abrirFaturaConsolidada(mapKey,nomeCartao,0,cartaoId)}else{toast('Erro ao excluir.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+async function pagarItemProxFatura(idLancamento,mapKey,nomeCartao,cartaoId,idParcela){
+try{
+let r
+if(idParcela){
+// Parcela de compra parcelada
+r=await fetch(`/parcelas/${idParcela}/pagar`,{method:'PATCH'})
+}else{
+// Lançamento direto
+r=await fetch(`/lancamentos/${idLancamento}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'pago',confirmar_pagamento:true})})
+}
+if(r.ok){toast('✅ Item pago!');await load();abrirFaturaConsolidada(mapKey,nomeCartao,0,cartaoId)}else{const err=await r.json().catch(()=>({}));toast(err.message||'Erro ao pagar.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+function pagarFaturaModal(cartaoId,nome,valor){
+const body=document.getElementById('modal-body'),foot=document.getElementById('modal-foot')
+const contaOpts=contas.map(c=>`<option value="${c.id_conta}">${c.descricao}</option>`).join('')
+body.innerHTML=`
+<div style="margin-bottom:16px;font-size:.88rem;font-weight:700">Pagamento da fatura: ${nome}</div>
+<div style="margin-bottom:12px"><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary)">Tipo:</label><div style="display:flex;gap:8px;margin-top:6px"><button type="button" style="padding:8px 16px;border:1.5px solid var(--primary);border-radius:99px;background:var(--primary);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit" id="pgto-total" onclick="document.getElementById('pgto-total').style.background='var(--primary)';document.getElementById('pgto-total').style.color='#fff';document.getElementById('pgto-parcial').style.background='var(--surface)';document.getElementById('pgto-parcial').style.color='var(--text-secondary)';document.getElementById('f-pgto-valor').value=${valor};document.getElementById('f-pgto-valor').readOnly=true">Total</button><button type="button" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:99px;background:var(--surface);color:var(--text-secondary);font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit" id="pgto-parcial" onclick="document.getElementById('pgto-parcial').style.background='var(--primary)';document.getElementById('pgto-parcial').style.color='#fff';document.getElementById('pgto-total').style.background='var(--surface)';document.getElementById('pgto-total').style.color='var(--text-secondary)';document.getElementById('f-pgto-valor').readOnly=false;document.getElementById('f-pgto-valor').focus()">Parcial</button></div></div>
+<div style="margin-bottom:12px"><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary)">Valor pago:</label><input type="number" id="f-pgto-valor" value="${valor}" readonly style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:1rem;font-weight:700;margin-top:4px;font-family:inherit"></div>
+<div style="margin-bottom:12px"><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary)">Conta de origem:</label><select id="f-pgto-conta" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;margin-top:4px;font-family:inherit"><option value="">Selecione...</option>${contaOpts}</select></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary)">Data:</label><input type="date" id="f-pgto-data" value="${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;margin-top:4px;font-family:inherit"></div>`
+foot.innerHTML=`<button class="btn btn-outline" onclick="fecharModal()">Voltar</button><button class="btn btn-primary" style="background:var(--success)" onclick="executarPagamento(${cartaoId})">SALVAR</button>`
+}
+
+async function executarPagamento(cartaoId){
+try{const r=await fetch(`/cartoes/${cartaoId}/pagar-fatura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ano:anoAtual,mes:mesAtual})})
+if(r.ok){toast('✅ Fatura paga com sucesso!');fecharModal();await load()}else{toast('Erro ao pagar fatura.')}}catch(e){toast('Erro de conexão.')}}
+
+async function executarPagamentoMes(cartaoId,ano,mes){
+try{const r=await fetch(`/cartoes/${cartaoId}/pagar-fatura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ano,mes})})
+if(r.ok){toast('✅ Fatura paga com sucesso!');fecharModal();await load()}else{toast('Erro ao pagar fatura.')}}catch(e){toast('Erro de conexão.')}}
+
+async function pagarFaturaCartao(cartaoId,nomeCartao){
+if(!confirm(`Pagar fatura de ${M[mesAtual-1]}/${anoAtual} do cartão ${nomeCartao}?`))return
+try{const r=await fetch(`/cartoes/${cartaoId}/pagar-fatura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ano:anoAtual,mes:mesAtual})})
+if(r.ok){toast('✅ Fatura paga com sucesso!');await load()}else{toast('Erro ao pagar fatura.')}}catch(e){toast('Erro de conexão.')}}
+
+async function reverterFaturaCartao(cartaoId,nomeCartao){
+if(!confirm(`Reverter pagamento da fatura de ${M[mesAtual-1]}/${anoAtual} do cartão ${nomeCartao}?`))return
+try{const r=await fetch(`/cartoes/${cartaoId}/reverter-fatura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ano:anoAtual,mes:mesAtual})})
+if(r.ok){toast('↩ Pagamento revertido!');await load()}else{toast('Erro ao reverter.')}}catch(e){toast('Erro de conexão.')}}
+
+function novaCompraCartao(cartaoId,nomeCartao){
+const body=document.getElementById('modal-body'),foot=document.getElementById('modal-foot'),tit=document.getElementById('modal-titulo')
+const bg=document.getElementById('modal-bg')
+tit.textContent=`Nova Compra — ${nomeCartao}`
+const hoje=document.getElementById('data-referencia')?.value||`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`
+body.innerHTML=`
+<div style="display:flex;flex-direction:column;gap:14px">
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Valor Total</label><input type="text" id="nc-valor" placeholder="0,00" oninput="formatarValorMonetario(this);atualizarInfoCompraNc()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.95rem;font-weight:700;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Descrição</label><input type="text" id="nc-descricao" placeholder="Ex: Compra no mercado" oninput="inferirCategoriaCompra(this.value)" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"><input type="hidden" id="nc-subcat-id"><input type="hidden" id="nc-cat-id"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Data da compra</label><input type="date" id="nc-data" value="${hoje}" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Categoria</label><select id="nc-categoria" onchange="document.getElementById('nc-cat-id').value=this.value" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"><option value="">Automática (por descrição)</option></select></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Compra</label>
+<div style="display:flex;gap:8px;margin-top:4px">
+<button type="button" id="nc-avista" onclick="document.getElementById('nc-avista').style.background='var(--primary)';document.getElementById('nc-avista').style.color='#fff';document.getElementById('nc-avista').style.borderColor='var(--primary)';document.getElementById('nc-parcelada').style.background='var(--surface)';document.getElementById('nc-parcelada').style.color='var(--text-secondary)';document.getElementById('nc-parcelada').style.borderColor='var(--border)';document.getElementById('nc-parcelas-wrap').style.display='none';atualizarInfoCompraNc()" style="padding:8px 18px;border:1.5px solid var(--primary);border-radius:99px;background:var(--primary);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit">À vista</button>
+<button type="button" id="nc-parcelada" onclick="document.getElementById('nc-parcelada').style.background='var(--primary)';document.getElementById('nc-parcelada').style.color='#fff';document.getElementById('nc-parcelada').style.borderColor='var(--primary)';document.getElementById('nc-avista').style.background='var(--surface)';document.getElementById('nc-avista').style.color='var(--text-secondary)';document.getElementById('nc-avista').style.borderColor='var(--border)';document.getElementById('nc-parcelas-wrap').style.display='block';atualizarInfoCompraNc()" style="padding:8px 18px;border:1.5px solid var(--border);border-radius:99px;background:var(--surface);color:var(--text-secondary);font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit">Parcelada</button>
+</div>
+<div id="nc-parcelas-wrap" style="display:none;margin-top:10px"><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Quantidade de parcelas</label><input type="number" id="nc-parcelas" min="2" max="48" value="2" oninput="atualizarInfoCompraNc()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"></div>
+<div id="nc-info-compra" style="margin-top:8px;padding:8px 12px;background:var(--surface-hover);border-radius:var(--radius);font-size:.78rem;font-weight:600;color:var(--text)"></div>
+</div>
+</div>`
+foot.innerHTML=`<button class="btn btn-outline" onclick="fecharModal()">Cancelar</button><button class="btn btn-primary" onclick="salvarNovaCompraCartao(${cartaoId},'${nomeCartao.replace(/'/g,"\\'")}')">Salvar</button>`
+bg.classList.add('open')
+carregarCategoriasParaFatura()
+}
+
+async function salvarNovaCompraCartao(cartaoId,nomeCartao){
+const valorStr=document.getElementById('nc-valor')?.value
+const descricao=document.getElementById('nc-descricao')?.value
+const dataCompra=document.getElementById('nc-data')?.value
+const catId=document.getElementById('nc-cat-id')?.value
+const subcatId=document.getElementById('nc-subcat-id')?.value
+const parceladaAtiva=document.getElementById('nc-parcelas-wrap')?.style.display!=='none'
+const parcelas=parceladaAtiva?Number(document.getElementById('nc-parcelas')?.value||1):1
+const valor=parseValorMonetario(valorStr)
+if(!valor||valor<=0){toast('Informe o valor.');return}
+if(!descricao){toast('Informe a descrição.');return}
+if(!dataCompra){toast('Informe a data.');return}
+const payload={
+valor,
+descricao_subcategoria:descricao,
+data_lancamento:dataCompra,
+cartao_id:cartaoId,
+forma_pgto_id:null,
+parcelas:parcelas>1?parcelas:undefined,
+observacao:descricao
+}
+if(catId)payload.id_categoria=Number(catId)
+if(subcatId)payload.subcategoria_id=Number(subcatId)
+try{
+const r=await fetch('/lancamentos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+if(r.ok){toast('✅ Compra registrada!');fecharModal();await load()}
+else{const e=await r.json().catch(()=>({}));toast(e.message||'Erro ao salvar.')}
+}catch(e){toast('Erro de conexão.')}
+}
+
+function abrirAdicionarCompra(cartaoId,idVenc,nomeCartao){
+const body=document.getElementById('modal-body'),foot=document.getElementById('modal-foot'),tit=document.getElementById('modal-titulo')
+tit.textContent=`Nova Compra — ${nomeCartao}`
+const hoje=document.getElementById('data-referencia')?.value||`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`
+body.innerHTML=`
+<div style="display:flex;flex-direction:column;gap:14px">
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Valor Total</label><input type="text" id="nc-valor" placeholder="0,00" oninput="formatarValorMonetario(this);atualizarInfoCompraNc()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.95rem;font-weight:700;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Descrição</label><input type="text" id="nc-descricao" placeholder="Ex: Compra no mercado" oninput="inferirCategoriaCompra(this.value)" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"><input type="hidden" id="nc-subcat-id"><input type="hidden" id="nc-cat-id"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Data da compra</label><input type="date" id="nc-data" value="${hoje}" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Categoria</label><select id="nc-categoria" onchange="document.getElementById('nc-cat-id').value=this.value" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"><option value="">Automática (por descrição)</option></select></div>
+<div><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Compra</label>
+<div style="display:flex;gap:8px;margin-top:4px">
+<button type="button" id="nc-avista" onclick="document.getElementById('nc-avista').style.background='var(--primary)';document.getElementById('nc-avista').style.color='#fff';document.getElementById('nc-avista').style.borderColor='var(--primary)';document.getElementById('nc-parcelada').style.background='var(--surface)';document.getElementById('nc-parcelada').style.color='var(--text-secondary)';document.getElementById('nc-parcelada').style.borderColor='var(--border)';document.getElementById('nc-parcelas-wrap').style.display='none';atualizarInfoCompraNc()" style="padding:8px 18px;border:1.5px solid var(--primary);border-radius:99px;background:var(--primary);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit">À vista</button>
+<button type="button" id="nc-parcelada" onclick="document.getElementById('nc-parcelada').style.background='var(--primary)';document.getElementById('nc-parcelada').style.color='#fff';document.getElementById('nc-parcelada').style.borderColor='var(--primary)';document.getElementById('nc-avista').style.background='var(--surface)';document.getElementById('nc-avista').style.color='var(--text-secondary)';document.getElementById('nc-avista').style.borderColor='var(--border)';document.getElementById('nc-parcelas-wrap').style.display='block';atualizarInfoCompraNc()" style="padding:8px 18px;border:1.5px solid var(--border);border-radius:99px;background:var(--surface);color:var(--text-secondary);font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit">Parcelada</button>
+</div>
+<div id="nc-parcelas-wrap" style="display:none;margin-top:10px"><label style="font-size:.72rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px">Quantidade de parcelas</label><input type="number" id="nc-parcelas" min="2" max="48" value="2" oninput="atualizarInfoCompraNc()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:inherit;outline:none"></div>
+<div id="nc-info-compra" style="margin-top:8px;padding:8px 12px;background:var(--surface-hover);border-radius:var(--radius);font-size:.78rem;font-weight:600;color:var(--text)"></div>
+</div>
+</div>`
+foot.innerHTML=`<button class="btn btn-outline" onclick="abrirFatura(${idVenc},'${nomeCartao.replace(/'/g,"\\'")}',0,${cartaoId})">Cancelar</button><button class="btn btn-primary" onclick="salvarCompraFatura(${cartaoId},${idVenc},'${nomeCartao.replace(/'/g,"\\'")}')">Salvar</button>`
+// Carregar categorias para inferência
+carregarCategoriasParaFatura()
+}
+
+let _catsFatura=[],_ncTimer=null
+async function carregarCategoriasParaFatura(){
+try{const r=await fetch('/categorias');_catsFatura=await r.json()}catch(e){_catsFatura=[]}
+// Preencher select de categoria se existir
+const sel=document.getElementById('nc-categoria')
+if(sel&&_catsFatura.length){sel.innerHTML='<option value="">Automática (por descrição)</option>'+_catsFatura.map(c=>`<option value="${c.id}">${c.descricao}</option>`).join('')}
+}
+
+function inferirCategoriaCompra(txt){
+clearTimeout(_ncTimer)
+_ncTimer=setTimeout(async()=>{
+const sel=document.getElementById('nc-categoria')
+if(!txt||txt.length<3){if(sel)sel.value='';return}
+// 1) Buscar por palavras-chave da categoria
+const palavras=txt.toLowerCase().split(/\s+/)
+for(const cat of _catsFatura){
+if(!cat.palavras_chave)continue
+const chaves=cat.palavras_chave.toLowerCase().split(',').map(s=>s.trim()).filter(Boolean)
+for(const palavra of palavras){
+if(chaves.some(ch=>palavra.includes(ch)||ch.includes(palavra))){
+document.getElementById('nc-cat-id').value=cat.id
+if(sel)sel.value=cat.id
+buscarSubcatCompra(txt,cat.id)
+return
+}
+}
+}
+// 2) Buscar subcategoria por nome
+try{
+const r=await fetch(`/subcategorias?search=${encodeURIComponent(txt)}`)
+const subs=await r.json()
+if(subs.length){
+document.getElementById('nc-subcat-id').value=subs[0].id_subcategoria
+document.getElementById('nc-cat-id').value=subs[0].categoria_id
+if(sel)sel.value=subs[0].categoria_id
+return
+}
+}catch(e){}
+// 3) Fallback: OUTROS
+const catOutros=_catsFatura.find(c=>c.descricao.toUpperCase()==='OUTROS')
+if(catOutros){
+document.getElementById('nc-cat-id').value=catOutros.id
+if(sel)sel.value=catOutros.id
+}
+},400)
+}
+
+async function buscarSubcatCompra(txt,catId){
+try{
+const r=await fetch(`/subcategorias?search=${encodeURIComponent(txt)}`)
+const subs=await r.json()
+const match=subs.find(s=>String(s.categoria_id)===String(catId))
+if(match)document.getElementById('nc-subcat-id').value=match.id_subcategoria
+}catch(e){}
+}
+
+async function salvarCompraFatura(cartaoId,idVenc,nomeCartao){
+const valor=parseValorMonetario(document.getElementById('nc-valor').value)
+const descricao=document.getElementById('nc-descricao').value.trim()
+const data=document.getElementById('nc-data').value
+const parcelada=document.getElementById('nc-parcelas-wrap').style.display!=='none'
+const parcelas=parcelada?Number(document.getElementById('nc-parcelas').value)||2:1
+if(parcelada&&parcelas<2){toast('Informe a quantidade de parcelas (mínimo 2).');return}
+const subcatId=document.getElementById('nc-subcat-id').value||null
+const catId=document.getElementById('nc-cat-id').value||null
+if(!valor||valor<=0){toast('Informe o valor.');return}
+if(!descricao){toast('Informe a descrição.');return}
+if(!data){toast('Informe a data.');return}
+try{
+const payload={
+valor,
+data_lancamento:data,
+tipo:'despesa',
+cartao_id:cartaoId,
+status:'pendente',
+parcelas,
+descricao_subcategoria:descricao,
+subcategoria_id:subcatId?Number(subcatId):undefined,
+id_categoria:catId?Number(catId):undefined
+}
+// Não enviar id_vencimento_destino - deixar o backend calcular o mês correto via gerarParcelas
+const r=await fetch('/lancamentos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+if(r.ok){const resp=await r.json().catch(()=>({}));toast('✅ Compra adicionada!');await load();
+// Reabrir o modal do mesmo cartão com dados atualizados
+const newMapKey=Object.keys(window._fatVencIds||{}).find(k=>k.startsWith('fat_'+cartaoId+'_'))
+if(newMapKey){abrirFaturaConsolidada(newMapKey,nomeCartao,0,cartaoId)}else{
+// Se não tem vencimento no mês atual, a compra foi para outro mês - mostrar msg
+toast('📅 Compra registrada na próxima fatura!');fecharModal()}
+}else{const err=await r.json().catch(()=>({}));toast(err.message||'Erro ao salvar.');console.error('Erro ao salvar compra:',err)}
+}catch(e){toast('Erro de conexão.')}
+}
+
+async function renderFaturasMensal(){
+const el=document.getElementById('faturas-mensal')
+try{
+// Buscar vencimentos de todos os meses do ano
+const res=await fetch(`/cartoes/vencimentos?ano=${anoAtual}`)
+const todos=await res.json()
+const MS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+el.innerHTML=MS.map((nome,i)=>{
+const mes=i+1
+const doMes=todos.filter(v=>{const d=v.data_vencimento||'';return Number(d.split('-')[1])===mes})
+const totalMes=doMes.reduce((s,v)=>s+Number(v.valor_fatura||0),0)
+const pagos=doMes.filter(v=>v.status==='pago')
+const totalPago=pagos.reduce((s,v)=>s+Number(v.valor_fatura||0),0)
+const pendente=totalMes-totalPago
+const isAtual=mes===mesAtual
+const cor=pendente>0?'var(--danger)':totalMes>0?'var(--success)':'var(--text-muted)'
+const statusIcon=totalMes===0?'➖':pendente===0?'✅':'⏳'
+return`<div style="border:${isAtual?'2px solid var(--primary)':'1px solid var(--border-light)'};border-radius:var(--radius);padding:12px;text-align:center;${isAtual?'box-shadow:0 2px 8px rgba(79,70,229,.1)':''}">
+<div style="font-size:.72rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px">${statusIcon} ${nome}</div>
+<div style="font-size:.95rem;font-weight:800;color:${cor}">${totalMes>0?moeda(totalMes):'—'}</div>
+${totalMes>0?`<div style="font-size:.65rem;color:var(--text-muted);margin-top:4px">${pendente>0?'Pendente: '+moeda(pendente):'✅ Pago'}</div>`:''}
+</div>`
+}).join('')
+}catch(e){el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;grid-column:1/-1;text-align:center;padding:16px">Não foi possível carregar.</div>'}
+}
+
+async function verDespesasCartao(nomeCartao, mapKey){
+const vencIds=window._vencIdsMap[mapKey]||[]
+const bg=document.getElementById('modal-bg'),body=document.getElementById('modal-body'),tit=document.getElementById('modal-titulo'),foot=document.getElementById('modal-foot')
+tit.textContent=`Despesas — ${nomeCartao}`
+body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:.82rem">Carregando...</div>'
+foot.innerHTML=`<button class="btn btn-outline" onclick="fecharModal()">Fechar</button>`
+bg.classList.add('open')
+try{
+let todas=[]
+for(const id of vencIds){const r=await fetch(`/lancamentos/por-vencimento/${id}`);const ls=await r.json();todas=todas.concat(ls)}
+if(!todas.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Nenhuma despesa encontrada.</div>';return}
+todas.sort((a,b)=>{const ca=(a.nome_categoria||'').localeCompare(b.nome_categoria||'');if(ca!==0)return ca;return(a.data_lancamento||'').localeCompare(b.data_lancamento||'')})
+const total=todas.reduce((s,l)=>s+Number(l.valor||0),0)
+body.innerHTML=`<div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:.82rem;font-weight:700;color:var(--text)">${todas.length} despesa${todas.length>1?'s':''}</span><strong style="font-size:.92rem;color:var(--danger)">${moeda(total)}</strong></div><div style="max-height:350px;overflow-y:auto">`+
+todas.map(l=>{const nP=Number(l.total_parcelas||0);const numP=l.numero_parcela||1;const parcBadge=nP>1?` <span style="font-size:.6rem;font-weight:700;color:var(--primary);background:var(--primary-light);padding:2px 6px;border-radius:99px">${numP}/${nP}</span>`:'';const planejada=l.tipo_despesa?"<span style=\"font-size:.6rem;font-weight:600;margin-left:4px;color:"+(l.tipo_despesa==='fixa'?'var(--primary)':'var(--purple)')+"\">"+(l.tipo_despesa==='fixa'?'(Fixa)':'(Variável)')+"</span>":'';return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:.82rem"><div style="flex:1;min-width:0"><span style="font-weight:600">${l.nome_subcategoria||'—'}${parcBadge}</span><br><span style="font-size:.68rem;color:var(--text-muted)">${l.nome_categoria||''} · ${fmtData(l.data_lancamento)}${planejada}</span></div><strong style="color:var(--danger);flex-shrink:0">${moeda(l.valor)}</strong></div>`}).join('')+'</div>'
+}catch(e){body.innerHTML='<div style="color:var(--danger);text-align:center;padding:20px">Erro ao carregar despesas.</div>'}}
+
+function fecharModal(){document.getElementById('modal-bg').classList.remove('open')}
+
+let filtroStatus='todos'
+function setFiltroStatus(status){
+filtroStatus=status
+document.querySelectorAll('.filtro-btn').forEach(b=>{
+if(b.dataset.filtro===status){b.style.background='var(--primary)';b.style.color='#fff';b.style.borderColor='var(--primary)';b.classList.add('active')}
+else{b.style.background='var(--surface)';b.style.color='var(--text-secondary)';b.style.borderColor='var(--border)';b.classList.remove('active')}
+})
+renderFaturas()
+}
+function aplicarFiltro(){renderFaturas()}
+function getFiltroBusca(){return(document.getElementById('filtro-busca')?.value||'').toLowerCase()}
+
+updNav();load()
+</script>
+</body>
+</html>

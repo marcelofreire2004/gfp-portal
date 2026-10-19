@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dívidas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-layout.css">
+    <style>
+        .content { max-width: 800px; margin: 0 auto; }
+
+        .btn-novo {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 12px; margin-bottom: 20px;
+            background: #4f46e5; color: #fff; border: none; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-novo:hover { background: #4338ca; }
+
+        /* Resumo */
+        .resumo-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; margin-bottom: 20px;
+        }
+        .resumo-card {
+            background: #fff; border-radius: 10px; padding: 14px 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center;
+        }
+        .resumo-card .label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
+        .resumo-card .valor { font-size: 1rem; font-weight: 700; }
+
+        /* Dívida card */
+        .divida-card {
+            background: #fff; border-radius: 12px; margin-bottom: 12px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08); overflow: hidden;
+        }
+        .divida-header {
+            padding: 16px 18px; cursor: pointer; display: flex; align-items: center; gap: 12px;
+        }
+        .divida-header:hover { background: #fafafa; }
+
+        .divida-status-dot {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        }
+        .dot-ativa       { background: #f59e0b; }
+        .dot-quitada     { background: #16a34a; }
+        .dot-renegociada { background: #3b82f6; }
+
+        .divida-info { flex: 1; }
+        .divida-desc { font-size: 0.95rem; font-weight: 700; color: #1e1b4b; }
+        .divida-meta { font-size: 0.75rem; color: #9ca3af; margin-top: 2px; }
+
+        .divida-valores { text-align: right; }
+        .divida-total   { font-size: 0.9rem; font-weight: 700; color: #ef4444; }
+        .divida-pago    { font-size: 0.75rem; color: #16a34a; }
+
+        /* Barra de progresso */
+        .progress-wrap { padding: 0 18px 14px; }
+        .progress-bar {
+            background: #f3f4f6; border-radius: 99px; height: 8px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; border-radius: 99px;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            transition: width 0.4s;
+        }
+        .progress-fill.done { background: #16a34a; }
+        .progress-label {
+            display: flex; justify-content: space-between;
+            font-size: 0.72rem; color: #9ca3af; margin-top: 4px;
+        }
+
+        /* Parcelas */
+        .parcelas-wrap {
+            display: none; border-top: 1px solid #f3f4f6;
+        }
+        .parcelas-wrap.open { display: block; }
+        .parcelas-title {
+            font-size: 0.75rem; font-weight: 700; color: #9ca3af;
+            text-transform: uppercase; padding: 10px 18px 6px;
+        }
+        .parcela-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 18px; border-bottom: 1px solid #f9f9f9;
+        }
+        .parcela-item:last-child { border-bottom: none; }
+        .parcela-num  { font-size: 0.75rem; color: #9ca3af; min-width: 28px; }
+        .parcela-info { flex: 1; }
+        .parcela-venc { font-size: 0.82rem; color: #1e1b4b; }
+        .parcela-pgto { font-size: 0.72rem; color: #16a34a; }
+        .parcela-atrasado { font-size: 0.72rem; color: #ef4444; }
+        .parcela-valor { font-size: 0.85rem; font-weight: 600; color: #1e1b4b; }
+
+        .btn-pagar {
+            padding: 5px 12px; border-radius: 99px; border: none; cursor: pointer;
+            font-size: 0.75rem; font-weight: 600;
+        }
+        .btn-pagar.pendente { background: #ede9fe; color: #5b21b6; }
+        .btn-pagar.pago     { background: #dcfce7; color: #16a34a; pointer-events: none; }
+        .btn-pagar.atrasado { background: #fee2e2; color: #ef4444; }
+
+        .badge-status {
+            font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; font-weight: 600;
+        }
+        .badge-ativa       { background: #fef9c3; color: #92400e; }
+        .badge-quitada     { background: #dcfce7; color: #065f46; }
+        .badge-renegociada { background: #dbeafe; color: #1e40af; }
+
+        .empty-state { text-align: center; padding: 48px 16px; color: #9ca3af; font-size: 0.9rem; }
+        .loading { text-align: center; color: #9ca3af; padding: 32px; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); justify-content: center;
+            align-items: flex-end; z-index: 100;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #fff; border-radius: 16px 16px 0 0; padding: 28px 24px;
+            width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+        }
+        .modal-drag { width: 40px; height: 4px; background: #e5e7eb; border-radius: 99px; margin: 0 auto 20px; }
+        .modal h2 { font-size: 1.1rem; color: #1e1b4b; font-weight: 700; margin-bottom: 20px; }
+
+        .field-group { position: relative; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+        .field-label { position: absolute; top: -9px; left: 12px; background: #fff; padding: 0 4px; font-size: 0.75rem; color: #6b7280; }
+        .field-group input, .field-group select, .field-group textarea {
+            width: 100%; border: none; outline: none; font-size: 0.95rem;
+            color: #1e1b4b; background: transparent; padding: 4px 0;
+        }
+        .field-group select { cursor: pointer; }
+        .field-group textarea { resize: vertical; min-height: 60px; }
+
+        .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f3f4f6; }
+        .btn { padding: 10px 20px; border: none; border-radius: 99px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .btn-primary   { background: #4f46e5; color: #fff; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-secondary { background: none; color: #4f46e5; border: 1px solid #4f46e5; }
+        .btn-danger    { background: #fee2e2; color: #ef4444; }
+        .msg { font-size: 0.8rem; color: #ef4444; text-align: center; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<script src="/shared-layout.js"></script>
+
+<div class="content">
+    <div class="resumo-grid" id="resumo-grid"></div>
+    <button class="btn-novo" onclick="abrirModalNovo()">+ Nova Dívida</button>
+    <div id="lista-dividas"><div class="loading">Carregando...</div></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <div class="modal-drag"></div>
+        <h2 id="modal-titulo">Nova Dívida</h2>
+        <form id="form-divida">
+            <input type="hidden" id="divida-id">
+
+            <div class="field-group">
+                <span class="field-label">Descrição</span>
+                <input type="text" id="div-descricao" required placeholder="Ex: Empréstimo pessoal">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Credor</span>
+                <input type="text" id="div-credor" required placeholder="Ex: Banco do Brasil">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Valor Total (R$)</span>
+                <input type="number" id="div-valor-total" required step="0.01" min="0" placeholder="0,00">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Taxa de Juros (% a.m.)</span>
+                <input type="number" id="div-taxa-juros" step="0.0001" min="0" placeholder="0,0000" value="0">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Data de Início</span>
+                <input type="date" id="div-data-inicio" required>
+            </div>
+            <div class="field-group">
+                <span class="field-label">Data de Vencimento</span>
+                <input type="date" id="div-data-vencimento">
+            </div>
+            <div class="field-group" id="campo-parcelas">
+                <span class="field-label">Número de Parcelas (opcional)</span>
+                <input type="number" id="div-total-parcelas" min="1" placeholder="Deixe em branco para não parcelar">
+            </div>
+            <div class="field-group">
+                <span class="field-label">Status</span>
+                <select id="div-status">
+                    <option value="ativa">Ativa</option>
+                    <option value="quitada">Quitada</option>
+                    <option value="renegociada">Renegociada</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <span class="field-label">Observação</span>
+                <textarea id="div-observacao" placeholder="Opcional..."></textarea>
+            </div>
+
+            <p class="msg" id="modal-msg"></p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-excluir" onclick="excluirDivida()" style="display:none">Excluir</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function moeda(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) }
+function fmtData(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('pt-BR') }
+function hoje() { return new Date().toISOString().split('T')[0] }
+
+let dividas = []
+
+async function carregar() {
+    const res = await fetch('/dividas')
+    dividas = await res.json()
+    renderResumo()
+    renderDividas()
+}
+
+function renderResumo() {
+    const total    = dividas.reduce((s,d) => s + Number(d.valor_total||0), 0)
+    const restante = dividas.filter(d => d.status === 'ativa').reduce((s,d) => s + Number(d.valor_restante||0), 0)
+    const quitadas = dividas.filter(d => d.status === 'quitada').length
+
+    document.getElementById('resumo-grid').innerHTML = `
+        <div class="resumo-card"><div class="label">Total em Dívidas</div><div class="valor" style="color:#ef4444">${moeda(total)}</div></div>
+        <div class="resumo-card"><div class="label">A Pagar</div><div class="valor" style="color:#f59e0b">${moeda(restante)}</div></div>
+        <div class="resumo-card"><div class="label">Quitadas</div><div class="valor" style="color:#16a34a">${quitadas}</div></div>
+    `
+}
+
+function renderDividas() {
+    const el = document.getElementById('lista-dividas')
+    if (!dividas.length) {
+        el.innerHTML = '<div class="empty-state">Nenhuma dívida cadastrada.</div>'
+        return
+    }
+    el.innerHTML = dividas.map(d => {
+        const pct = d.valor_total > 0 ? Math.min(100, Math.round(d.valor_pago / d.valor_total * 100)) : 0
+        return `
+        <div class="divida-card" id="card-${d.id_divida}">
+            <div class="divida-header" onclick="toggleParcelas(${d.id_divida})">
+                <div class="divida-status-dot dot-${d.status}"></div>
+                <div class="divida-info">
+                    <div class="divida-desc">${d.descricao} <span class="badge-status badge-${d.status}">${d.status}</span></div>
+                    <div class="divida-meta">${d.credor}${d.data_vencimento ? ' · Vence ' + fmtData(d.data_vencimento) : ''}</div>
+                </div>
+                <div class="divida-valores">
+                    <div class="divida-total">${moeda(d.valor_restante)}</div>
+                    <div class="divida-pago">Pago: ${moeda(d.valor_pago)}</div>
+                </div>
+                <button onclick="event.stopPropagation(); abrirModalEditar(${JSON.stringify(d).replace(/"/g,'&quot;')})" 
+                    style="background:none;border:none;cursor:pointer;color:#4f46e5;font-size:1rem;padding:4px 8px">✏️</button>
+            </div>
+            <div class="progress-wrap">
+                <div class="progress-bar">
+                    <div class="progress-fill ${pct === 100 ? 'done' : ''}" style="width:${pct}%"></div>
+                </div>
+                <div class="progress-label"><span>0%</span><span>${pct}% quitado</span><span>100%</span></div>
+            </div>
+            <div class="parcelas-wrap" id="parcelas-${d.id_divida}">
+                <div class="parcelas-title">Carregando parcelas...</div>
+            </div>
+        </div>`
+    }).join('')
+}
+
+const parcelasCarregadas = {}
+
+async function toggleParcelas(id) {
+    const el = document.getElementById(`parcelas-${id}`)
+    const aberto = el.classList.contains('open')
+    el.classList.toggle('open', !aberto)
+
+    if (!aberto && !parcelasCarregadas[id]) {
+        parcelasCarregadas[id] = true
+        const res = await fetch(`/dividas/${id}/parcelas`)
+        const parcelas = await res.json()
+        renderParcelas(id, parcelas)
+    }
+}
+
+function renderParcelas(id, parcelas) {
+    const el = document.getElementById(`parcelas-${id}`)
+    if (!parcelas.length) {
+        el.innerHTML = '<div class="parcelas-title">Sem parcelas cadastradas.</div>'
+        return
+    }
+    el.innerHTML = `
+        <div class="parcelas-title">Parcelas (${parcelas.length})</div>
+        ${parcelas.map(p => {
+            const atrasado = p.status === 'pendente' && new Date(p.data_vencimento) < new Date()
+            const statusEfetivo = atrasado ? 'atrasado' : p.status
+            return `
+            <div class="parcela-item">
+                <div class="parcela-num">${p.numero_parcela}/${parcelas.length}</div>
+                <div class="parcela-info">
+                    <div class="parcela-venc">Vence: ${fmtData(p.data_vencimento)}</div>
+                    ${p.data_pagamento
+                        ? `<div class="parcela-pgto">Pago em: ${fmtData(p.data_pagamento)}</div>`
+                        : atrasado ? '<div class="parcela-atrasado">⚠️ Atrasada</div>' : ''}
+                </div>
+                <div class="parcela-valor">${moeda(p.valor)}</div>
+                <button class="btn-pagar ${statusEfetivo}"
+                    onclick="pagarParcela(${id}, ${p.id_parcela})"
+                    ${p.status === 'pago' ? 'disabled' : ''}>
+                    ${p.status === 'pago' ? '✓ Pago' : 'Pagar'}
+                </button>
+            </div>`
+        }).join('')}`
+}
+
+async function pagarParcela(idDivida, idParcela) {
+    if (!confirm('Marcar parcela como paga?')) return
+    const res = await fetch(`/dividas/${idDivida}/parcelas/${idParcela}`, {
+        method: 'PATCH', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ status: 'pago' })
+    })
+    if (res.ok) {
+        delete parcelasCarregadas[idDivida]
+        await carregar()
+        // Reabre as parcelas após recarregar
+        setTimeout(() => { toggleParcelas(idDivida) }, 100)
+    }
+}
+
+function abrirModalNovo() {
+    document.getElementById('modal-titulo').textContent = 'Nova Dívida'
+    document.getElementById('divida-id').value = ''
+    document.getElementById('form-divida').reset()
+    document.getElementById('div-data-inicio').value = hoje()
+    document.getElementById('btn-excluir').style.display = 'none'
+    document.getElementById('modal-msg').textContent = ''
+    document.getElementById('campo-parcelas').style.display = ''
+    document.getElementById('modal-overlay').classList.add('open')
+}
+
+function abrirModalEditar(d) {
+    document.getElementById('modal-titulo').textContent = 'Editar Dívida'
+    document.getElementById('divida-id').value = d.id_divida
+    document.getElementById('div-descricao').value = d.descricao || ''
+    document.getElementById('div-credor').value = d.credor || ''
+    document.getElementById('div-valor-total').value = d.valor_total || ''
+    document.getElementById('div-taxa-juros').value = d.taxa_juros || 0
+    document.getElementById('div-data-inicio').value = d.data_inicio ? d.data_inicio.split('T')[0] : ''
+    document.getElementById('div-data-vencimento').value = d.data_vencimento ? d.data_vencimento.split('T')[0] : ''
+    document.getElementById('div-status').value = d.status || 'ativa'
+    document.getElementById('div-observacao').value = d.observacao || ''
+    document.getElementById('btn-excluir').style.display = 'inline-block'
+    document.getElementById('modal-msg').textContent = ''
+    document.getElementById('campo-parcelas').style.display = 'none'
+    document.getElementById('modal-overlay').classList.add('open')
+}
+
+function fecharModal() { document.getElementById('modal-overlay').classList.remove('open') }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModal() })
+
+document.getElementById('form-divida').addEventListener('submit', async e => {
+    e.preventDefault()
+    const id = document.getElementById('divida-id').value
+    const body = {
+        descricao:       document.getElementById('div-descricao').value,
+        credor:          document.getElementById('div-credor').value,
+        valor_total:     Number(document.getElementById('div-valor-total').value),
+        taxa_juros:      Number(document.getElementById('div-taxa-juros').value) || 0,
+        data_inicio:     document.getElementById('div-data-inicio').value,
+        data_vencimento: document.getElementById('div-data-vencimento').value || null,
+        status:          document.getElementById('div-status').value,
+        observacao:      document.getElementById('div-observacao').value || null,
+    }
+    if (!id) {
+        const p = document.getElementById('div-total-parcelas').value
+        if (p) body.total_parcelas = Number(p)
+    }
+
+    let res
+    if (id) {
+        res = await fetch(`/dividas/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    } else {
+        res = await fetch('/dividas', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+    }
+
+    if (res.ok) { fecharModal(); await carregar() }
+    else { document.getElementById('modal-msg').textContent = 'Erro ao salvar.' }
+})
+
+async function excluirDivida() {
+    const id = document.getElementById('divida-id').value
+    if (!id || !confirm('Excluir esta dívida e suas parcelas?')) return
+    const res = await fetch(`/dividas/${id}`, { method: 'DELETE' })
+    if (res.ok) { fecharModal(); await carregar() }
+}
+
+carregar()
+</script>
+</body>
+</html>
