@@ -9,10 +9,12 @@ dívidas, metas, programas de fidelidade, notificações e configurações.
 - **Tecnologia:** HTML/CSS/JavaScript **vanilla** (sem build, sem framework).
   Cada página em `public/` é autocontida; `shared-layout.css` e
   `shared-layout.js` fornecem sidebar, topbar, tema e o wrapper de autenticação.
-- **Origem:** este repositório é uma **cópia versionada** do portal que hoje
-  vive dentro do backend `node-zero` (pasta `public/`). A separação nesta fase é
-  **apenas organizacional** — o portal continua sendo **servido pelo backend
-  `node-zero`, no mesmo domínio**, em produção. Nada no backend foi alterado.
+- **Origem:** este repositório é a **fonte única** do portal. O backend
+  `node-zero` **não versiona mais** a pasta `public/` — ela é **gerada no build**
+  a partir deste repositório, pelo script `scripts/sync-portal.mjs`
+  (`npm run sync:portal` / `npm run build` no node-zero). A separação nesta fase
+  ainda é **organizacional** quanto ao runtime: o portal continua sendo
+  **servido pelo backend `node-zero`, no mesmo domínio**, em produção.
 
 ## Como o portal conversa com a API (importante)
 
@@ -48,9 +50,12 @@ gfp-portal/
 ## Executar localmente (desenvolvimento)
 
 Nesta fase, o portal é servido pelo backend `node-zero` (Fastify + `@fastify/static`).
-Para rodar o conjunto, suba o backend (`node-zero`): ele serve as páginas e a API
-no mesmo domínio (`http://localhost:3333`). Este repositório guarda o código-fonte
-do portal de forma versionada e independente, mas o deploy, por ora, é conjunto.
+Para rodar o conjunto, tenha este repositório ao lado do `node-zero`
+(`../gfp-portal`) e, no `node-zero`, rode `npm run sync:portal` para gerar a
+pasta `public/` a partir daqui; em seguida suba o backend (`npm run dev`). Ele
+serve as páginas e a API no mesmo domínio (`http://localhost:3333`). Este
+repositório é a fonte do portal; o deploy, por ora, é conjunto (o backend gera
+`public/` no build).
 
 ## Passos para hospedar o portal SEPARADO da API (fase futura)
 
@@ -61,7 +66,9 @@ necessário:
    (`fetch('/x')`) por `fetch(API_BASE_URL + '/x')`.
 2. Ajustar o wrapper de `fetch` em `shared-layout.js` para injetar o JWT nas
    chamadas ao **domínio da API** (hoje a condição é "same-origin").
-3. Habilitar **CORS** no backend (`@fastify/cors`) permitindo a origem do portal.
+3. Adicionar a origem do portal à allowlist de **CORS** do backend. O CORS já
+   está habilitado (`@fastify/cors`) e as origens são controladas pela env
+   `CORS_ORIGINS` — basta incluir o domínio do portal.
 4. Decidir se o backend deixa de servir `public/` (removendo as rotas de página
    e a allowlist correspondente em `auth-hook.js`).
 
